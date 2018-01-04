@@ -32,6 +32,7 @@ class Encoder(nn.Module):
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
+    self.dropout = nn.Dropout()
     self.encoder_layers = [
         EncoderLayer(size) for _ in range(1, num_layers + 1)
     ]
@@ -39,6 +40,7 @@ class Encoder(nn.Module):
   def forward(self, x):
     x = self.embedding(x)
     x = self.positional_encoding(x)
+    x = self.dropout(x)
 
     for layer in self.encoder_layers:
       x = layer(x)
@@ -55,6 +57,7 @@ class Decoder(nn.Module):
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
+    self.dropout = nn.Dropout()
     self.decoder_layers = [
         DecoderLayer(size) for _ in range(1, num_layers + 1)
     ]
@@ -62,6 +65,7 @@ class Decoder(nn.Module):
   def forward(self, y_bottom, states):
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
+    y_bottom = self.dropout(y_bottom)
 
     for layer in self.decoder_layers:
       y_bottom = layer(y_bottom, states)
@@ -156,6 +160,7 @@ class FeedForwardSublayer(nn.Module):
 
 class LayerNorm(nn.Module):
   # TODO: check if this is correct
+  # TODO: train and test states
 
   def __init__(self, size, eps=1e-6):
     super().__init__()

@@ -36,7 +36,7 @@ def main():
       source_vocab_size=dataset.vocab_size,
       target_vocab_size=dataset.vocab_size,
       size=128,
-      num_layers=4)
+      num_layers=2)
 
   optimizer = optim.Adam(model.parameters(), lr=0.001)
 
