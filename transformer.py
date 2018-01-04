@@ -8,6 +8,7 @@ import attention
 class Tranformer(nn.Module):
   # TODO: add biases
   # TODO: layer normalization
+  # TODO: multihead attention
   def __init__(self, source_vocab_size, target_vocab_size, size, num_layers):
     super().__init__()
 
@@ -23,43 +24,47 @@ class Tranformer(nn.Module):
 
 
 class Encoder(nn.Module):
+  # TODO: check train() and eval() sets state to layers
+
   def __init__(self, num_embeddings, size, num_layers):
     super().__init__()
 
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
-
-    for i in range(1, num_layers + 1):
-      layer = EncoderLayer(size)
-      setattr(self, 'el{}'.format(i), layer)
+    self.encoder_layers = [
+        EncoderLayer(size) for _ in range(1, num_layers + 1)
+    ]
 
   def forward(self, x):
     x = self.embedding(x)
     x = self.positional_encoding(x)
-    x = self.el1(x)
-    x = self.el2(x)
+
+    for layer in self.encoder_layers:
+      x = layer(x)
 
     return x
 
 
 class Decoder(nn.Module):
+  # TODO: check train() and eval() sets state to layers
+
   def __init__(self, num_embeddings, size, num_layers):
     super().__init__()
 
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
-
-    for i in range(1, num_layers + 1):
-      layer = DecoderLayer(size)
-      setattr(self, 'dl{}'.format(i), layer)
+    self.decoder_layers = [
+        DecoderLayer(size) for _ in range(1, num_layers + 1)
+    ]
 
   def forward(self, y_bottom, states):
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
-    y_bottom = self.dl1(y_bottom, states)
-    y_bottom = self.dl2(y_bottom, states)
+
+    for layer in self.decoder_layers:
+      y_bottom = layer(y_bottom, states)
 
     return y_bottom
 
@@ -133,8 +138,8 @@ class FeedForwardSublayer(nn.Module):
   def __init__(self, size):
     super().__init__()
 
-    self.fc1 = nn.Linear(size, size)
-    self.fc2 = nn.Linear(size, size)
+    self.fc1 = nn.Linear(size, size * 4)
+    self.fc2 = nn.Linear(4 * size, size)
     self.layer_norm = LayerNorm(size)
 
   def forward(self, x):
