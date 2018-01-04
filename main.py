@@ -49,9 +49,16 @@ def main():
 
     y_top = model(x, y_bottom)
 
+    mask = torch.ones(dataset.vocab_size).index_add_(
+        0,
+        torch.LongTensor([dataset.pad]),
+        torch.FloatTensor([-1]),
+    )
+
     loss = F.cross_entropy(
         y_top.view(-1, dataset.vocab_size),
-        y.contiguous().view(-1))
+        y.contiguous().view(-1),
+        weight=mask)
 
     loss.backward()
     optimizer.step()

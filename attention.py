@@ -27,7 +27,7 @@ class Attention(nn.Module):
 
 
 class LuongAttention(nn.Module):
-  # TODO: check this is correct
+  # TODO: check if this is correct
 
   def __init__(self, size):
     super().__init__()

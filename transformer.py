@@ -111,13 +111,13 @@ class AttentionSublayer(nn.Module):
     super().__init__()
 
     self.attention = attention.Attention(size)
+    self.layer_norm = LayerNorm(size)
 
   def forward(self, x, states):
     saved = x
 
     x = self.attention(x, states)
-    x = saved + x
-    x = F.relu(x)
+    x = self.layer_norm(saved + x)
 
     return x
 
@@ -128,27 +128,38 @@ class SelfAttentionSublayer(AttentionSublayer):
 
 
 class FeedForwardSublayer(nn.Module):
-  # TODO: batch normalization
   # TODO: check inner-layer size
 
   def __init__(self, size):
     super().__init__()
 
     self.fc1 = nn.Linear(size, size)
-    # self.bn1 = nn.Linear(size, size)
     self.fc2 = nn.Linear(size, size)
-    # self.bn2 = nn.Linear(size, size)
+    self.layer_norm = LayerNorm(size)
 
   def forward(self, x):
     saved = x
 
     x = self.fc1(x)
-    # x = self.bn1(x)
     x = F.relu(x)
-
     x = self.fc2(x)
-    # x = self.bn2(x)
-    x = saved + x
-    x = F.relu(x)
+
+    x = self.layer_norm(saved + x)
 
     return x
+
+
+class LayerNorm(nn.Module):
+  # TODO: check if this is correct
+
+  def __init__(self, size, eps=1e-6):
+    super().__init__()
+    self.gamma = nn.Parameter(torch.ones(size).unsqueeze(0).unsqueeze(0))
+    self.beta = nn.Parameter(torch.zeros(size).unsqueeze(0).unsqueeze(0))
+    self.eps = eps
+
+  def forward(self, x):
+    mean = x.mean(-1, keepdim=True)
+    std = x.std(-1, keepdim=True)
+
+    return self.gamma * (x - mean) / (std + self.eps) + self.beta
