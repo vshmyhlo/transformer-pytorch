@@ -7,11 +7,12 @@ import attention
 
 class Tranformer(nn.Module):
   # TODO: multihead attention
-  def __init__(self, source_vocab_size, target_vocab_size, size, num_layers):
+  def __init__(self, source_vocab_size, target_vocab_size, size, num_layers,
+               dropout):
     super().__init__()
 
-    self.encoder = Encoder(source_vocab_size, size, num_layers)
-    self.decoder = Decoder(target_vocab_size, size, num_layers)
+    self.encoder = Encoder(source_vocab_size, size, num_layers, dropout)
+    self.decoder = Decoder(target_vocab_size, size, num_layers, dropout)
     self.projection = nn.Linear(size, target_vocab_size)
 
   def forward(self, x, y_bottom):
@@ -24,14 +25,14 @@ class Tranformer(nn.Module):
 class Encoder(nn.Module):
   # TODO: check train() and eval() sets state to layers
 
-  def __init__(self, num_embeddings, size, num_layers):
+  def __init__(self, num_embeddings, size, num_layers, dropout):
     super().__init__()
 
     self.num_layers = num_layers
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
-    self.dropout = nn.Dropout()
+    self.dropout = nn.Dropout(dropout)
 
     for i in range(1, self.num_layers + 1):
       setattr(self, 'encoder_layer{}'.format(i), EncoderLayer(size))
@@ -44,20 +45,22 @@ class Encoder(nn.Module):
     for i in range(1, self.num_layers + 1):
       x = getattr(self, 'encoder_layer{}'.format(i))(x)
 
+    x /= self.num_layers
+
     return x
 
 
 class Decoder(nn.Module):
   # TODO: check train() and eval() sets state to layers
 
-  def __init__(self, num_embeddings, size, num_layers):
+  def __init__(self, num_embeddings, size, num_layers, dropout):
     super().__init__()
 
     self.num_layers = num_layers
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
-    self.dropout = nn.Dropout()
+    self.dropout = nn.Dropout(dropout)
 
     for i in range(1, self.num_layers + 1):
       setattr(self, 'decoder_layer{}'.format(i), DecoderLayer(size))

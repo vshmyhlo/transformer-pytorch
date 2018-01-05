@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch
 import torch.optim as optim
@@ -33,19 +34,25 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
+  parser.add_argument("--size", help="transformer size", type=int, default=128)
   parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
+  parser.add_argument(
+      "--dropout", help="dropout probability", type=float, default=0.2)
   args = parser.parse_args()
 
   steps = 1000
-  log_interval = 10
+  log_interval = 20
 
   model = Tranformer(
       source_vocab_size=dataset.vocab_size,
       target_vocab_size=dataset.vocab_size,
-      size=128,
-      num_layers=2)
-  model.load_state_dict(torch.load(args.weights))
+      size=args.size,
+      num_layers=2,
+      dropout=args.dropout)
+
+  if os.path.exists(args.weights):
+    model.load_state_dict(torch.load(args.weights))
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
