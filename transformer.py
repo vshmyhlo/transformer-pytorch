@@ -6,8 +6,6 @@ import attention
 
 
 class Tranformer(nn.Module):
-  # TODO: add biases
-  # TODO: layer normalization
   # TODO: multihead attention
   def __init__(self, source_vocab_size, target_vocab_size, size, num_layers):
     super().__init__()
@@ -29,21 +27,22 @@ class Encoder(nn.Module):
   def __init__(self, num_embeddings, size, num_layers):
     super().__init__()
 
+    self.num_layers = num_layers
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
     self.dropout = nn.Dropout()
-    self.encoder_layers = [
-        EncoderLayer(size) for _ in range(1, num_layers + 1)
-    ]
+
+    for i in range(1, self.num_layers + 1):
+      setattr(self, 'encoder_layer{}'.format(i), EncoderLayer(size))
 
   def forward(self, x):
     x = self.embedding(x)
     x = self.positional_encoding(x)
     x = self.dropout(x)
 
-    for layer in self.encoder_layers:
-      x = layer(x)
+    for i in range(1, self.num_layers + 1):
+      x = getattr(self, 'encoder_layer{}'.format(i))(x)
 
     return x
 
@@ -54,21 +53,22 @@ class Decoder(nn.Module):
   def __init__(self, num_embeddings, size, num_layers):
     super().__init__()
 
+    self.num_layers = num_layers
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings, embedding_dim=size)
     self.positional_encoding = PositionalEncoding()
     self.dropout = nn.Dropout()
-    self.decoder_layers = [
-        DecoderLayer(size) for _ in range(1, num_layers + 1)
-    ]
+
+    for i in range(1, self.num_layers + 1):
+      setattr(self, 'decoder_layer{}'.format(i), DecoderLayer(size))
 
   def forward(self, y_bottom, states):
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
     y_bottom = self.dropout(y_bottom)
 
-    for layer in self.decoder_layers:
-      y_bottom = layer(y_bottom, states)
+    for i in range(1, self.num_layers + 1):
+      y_bottom = getattr(self, 'decoder_layer{}'.format(i))(y_bottom, states)
 
     return y_bottom
 
@@ -137,8 +137,6 @@ class SelfAttentionSublayer(AttentionSublayer):
 
 
 class FeedForwardSublayer(nn.Module):
-  # TODO: check inner-layer size
-
   def __init__(self, size):
     super().__init__()
 

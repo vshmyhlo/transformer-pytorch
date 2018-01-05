@@ -1,3 +1,4 @@
+import argparse
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -7,7 +8,7 @@ from transformer import Tranformer
 
 
 def gen(batch_size):
-  g = dataset.gen(min_len=3, max_len=4)
+  g = dataset.gen(min_len=3, max_len=5)
 
   while True:
     xs, ys = [], []
@@ -29,6 +30,13 @@ def gen(batch_size):
 
 
 def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--weights", help="weight file", type=str, required=True)
+  parser.add_argument("--batch-size", help="batch size", type=int, default=32)
+  parser.add_argument(
+      "--learning-rate", help="learning rate", type=float, default=0.001)
+  args = parser.parse_args()
+
   steps = 1000
   log_interval = 10
 
@@ -37,11 +45,12 @@ def main():
       target_vocab_size=dataset.vocab_size,
       size=128,
       num_layers=2)
+  model.load_state_dict(torch.load(args.weights))
 
-  optimizer = optim.Adam(model.parameters(), lr=0.001)
+  optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   model.train()
-  for i, (x, y) in zip(range(steps), gen(32)):
+  for i, (x, y) in zip(range(steps), gen(args.batch_size)):
     optimizer.zero_grad()
 
     x, y = Variable(x), Variable(y)
@@ -70,6 +79,8 @@ def main():
           dataset.decode(y.data[0]),
           dataset.decode(torch.max(y_top, dim=-1)[1].data[0]),
       ))
+
+      torch.save(model.state_dict(), args.weights)
 
 
 if __name__ == '__main__':
