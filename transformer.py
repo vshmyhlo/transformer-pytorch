@@ -169,3 +169,13 @@ def loss(y_top, y):
   loss = loss.mean()
 
   return loss
+
+
+def accuracy(y_top, y):
+  y_top = y_top.max(-1)[1]
+  mask = (y != 0).float()
+  eq = (y_top == y).float()
+  eq = eq * mask
+  acc = eq.sum() / mask.sum()
+
+  return acc

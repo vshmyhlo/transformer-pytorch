@@ -74,10 +74,8 @@ def main():
 
     y_top = model(x, y_bottom)
     loss = transformer.loss(y_top=y_top, y=y)
-
-    # TODO: do not account padding
-    accuracy = torch.max(y_top, dim=-1)[1] == y
-    accuracy = accuracy.float().mean() * 100
+    accuracy = transformer.accuracy(y_top=y_top, y=y)
+    accuracy = accuracy * 100
 
     if i % log_interval == 0:
       print(
