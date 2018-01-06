@@ -119,26 +119,35 @@ class PositionalEncoding(nn.Module):
   def forward(self, x):
     size = x.size()
 
-    pos = torch.arange(size[1]).unsqueeze(0).unsqueeze(-1)
-    dim = torch.arange(size[2]).unsqueeze(0).unsqueeze(0)
-    # TODO: find good multiplier
-    encoding = torch.sin(pos / 10000**(0.75 * dim / size[-1]))
-    # encoding = torch.cos(pos / 10000**(2 * dim / size[-1]))
-    encoding = encoding.repeat(x.size(0), 1, 1)
+    pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).cuda()
+    dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).cuda()
+    encoding = pos / 10000**(0.75 * dim / size[-1])
     encoding = Variable(encoding)
+    encoding_sin = torch.sin(encoding)
+    encoding_cos = torch.cos(encoding)
 
     # import matplotlib.pyplot as plt
     # for i in range(size[1]):
-    #   plt.plot(encoding[0, i, :].numpy())
+    #   plt.plot(encoding[0, i, :].data.numpy())
     #   plt.title('size')
     # plt.show()
     # for i in range(size[2]):
-    #   plt.plot(encoding[0, :, i].numpy())
+    #   plt.plot(encoding[0, :, i].data.numpy())
     #   plt.title('time')
     # plt.show()
     # fail
 
-    x = torch.cat([x, encoding], -1)
+    # x = torch.cat([
+    #     x[:, :, 0::2] + encoding_sin,
+    #     x[:, :, 1::2] + encoding_cos,
+    # ], -1)
+
+    x = torch.cat([
+        x,
+        encoding_sin.repeat(size[0], 1, 1),
+        encoding_cos.repeat(size[0], 1, 1),
+    ], -1)
+
     x = self.projection(x)
 
     return x
