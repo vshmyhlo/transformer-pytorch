@@ -3,13 +3,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class MultiHeadAttention(nn.Module):
+  # TODO: vectorize this
+
+  def __init__(self, size, n_heads):
+    super().__init__()
+
+    self.attentions = nn.ModuleList([Attention(size) for _ in range(n_heads)])
+    self.projection = nn.Linear(size * n_heads, size)
+
+  def forward(self, x, states):
+    xs = [attention(x, states) for attention in self.attentions]
+    x = torch.cat(xs, -1)
+    x = self.projection(x)
+    return x
+
+
 class Attention(nn.Module):
   def __init__(self, size):
     super().__init__()
 
-    self.ql = nn.Linear(size, size)
-    self.kl = nn.Linear(size, size)
-    self.vl = nn.Linear(size, size)
+    self.ql = nn.Linear(size, size, bias=False)
+    self.kl = nn.Linear(size, size, bias=False)
+    self.vl = nn.Linear(size, size, bias=False)
     self.attention = LuongAttention(size)
 
   def forward(self, x, states):
@@ -31,7 +47,7 @@ class LuongAttention(nn.Module):
 
   def __init__(self, size):
     super().__init__()
-    self.fc = nn.Linear(size, size)
+    self.fc = nn.Linear(size, size, bias=False)
 
   def forward(self, q, k):
     wk = self.fc(k)

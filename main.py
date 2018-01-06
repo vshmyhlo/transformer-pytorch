@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import python_format as dataset
-from transformer import Tranformer
+import transformer
 
 
 def gen(batch_size):
@@ -42,14 +42,16 @@ def main():
   args = parser.parse_args()
 
   steps = 1000
-  log_interval = 20
+  log_interval = 10
 
-  model = Tranformer(
+  model = transformer.Tranformer(
       source_vocab_size=dataset.vocab_size,
       target_vocab_size=dataset.vocab_size,
       size=args.size,
-      num_layers=2,
-      dropout=args.dropout)
+      n_layers=2,
+      n_heads=4,
+      dropout=args.dropout,
+      padding_idx=dataset.pad)
 
   if os.path.exists(args.weights):
     model.load_state_dict(torch.load(args.weights))
@@ -64,17 +66,7 @@ def main():
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     y_top = model(x, y_bottom)
-
-    mask = torch.ones(dataset.vocab_size).index_add_(
-        0,
-        torch.LongTensor([dataset.pad]),
-        torch.FloatTensor([-1]),
-    )
-
-    loss = F.cross_entropy(
-        y_top.view(-1, dataset.vocab_size),
-        y.contiguous().view(-1),
-        weight=mask)
+    loss = transformer.loss(y_top=y_top, y=y)
 
     loss.backward()
     optimizer.step()
