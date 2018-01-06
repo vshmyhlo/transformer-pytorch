@@ -46,7 +46,6 @@ class FeedForwardSublayer(nn.Module):
 
 
 class LayerNorm(nn.Module):
-  # TODO: check if this is correct
   # TODO: train and test states
 
   def __init__(self, size, eps=1e-6):

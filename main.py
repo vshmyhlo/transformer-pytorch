@@ -32,6 +32,7 @@ def gen(batch_size):
 
 def main():
   # TODO: visualize attention
+  # TODO: inference
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)

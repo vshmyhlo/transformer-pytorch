@@ -6,7 +6,6 @@ import sublayers
 
 
 class Tranformer(nn.Module):
-  # TODO: multihead attention
   def __init__(self, source_vocab_size, target_vocab_size, size, n_layers,
                n_heads, dropout, padding_idx):
     super().__init__()
@@ -53,8 +52,6 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  # TODO: check train() and eval() sets state to layers
-
   def __init__(self, num_embeddings, size, n_layers, n_heads, dropout,
                padding_idx):
     super().__init__()
@@ -127,9 +124,9 @@ class PositionalEncoding(nn.Module):
     elif self.pe_type == 'addition':
       k = 2
 
-    # TODO: cuda
-    pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).cuda()
-    dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).cuda()
+    pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).type_as(
+        x.data)
+    dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).type_as(x.data)
     encoding = pos / 10000**(k * dim / size[-1])
     encoding = Variable(encoding)
     encoding_sin = torch.sin(encoding)
