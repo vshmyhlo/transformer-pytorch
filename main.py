@@ -38,13 +38,14 @@ def main():
   parser.add_argument("--size", help="transformer size", type=int, default=128)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
+      "--steps", help="number of steps", type=int, default=1000)
+  parser.add_argument(
+      "--log-interval", help="log interval", type=int, default=100)
+  parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.2)
   args = parser.parse_args()
-
-  steps = 1000
-  log_interval = 10
 
   model = transformer.Tranformer(
       source_vocab_size=dataset.vocab_size,
@@ -63,7 +64,7 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   model.train()
-  for i, (x, y) in zip(range(steps), gen(args.batch_size)):
+  for i, (x, y) in zip(range(args.steps), gen(args.batch_size)):
     optimizer.zero_grad()
 
     x, y = Variable(x), Variable(y)
@@ -76,7 +77,7 @@ def main():
     loss = transformer.loss(y_top=y_top, y=y)
     accuracy = transformer.accuracy(y_top=y_top, y=y)
 
-    if i % log_interval == 0:
+    if i % args.log_interval == 0:
       print(
           'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
           format(
