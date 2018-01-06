@@ -120,8 +120,8 @@ class PositionalEncoding(nn.Module):
     size = x.size()
 
     if self.pe_type == 'projection':
-      # k = 0.75
-      k = 2
+      k = 0.75
+      # k = 2
     elif self.pe_type == 'addition':
       k = 2
 
