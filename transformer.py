@@ -122,7 +122,7 @@ class PositionalEncoding(nn.Module):
     # TODO: cuda
     pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).cuda()
     dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).cuda()
-    encoding = pos / 10000**(2 * dim / size[-1])
+    encoding = pos / 10000**(0.75 * dim / size[-1])
     encoding = Variable(encoding)
     encoding_sin = torch.sin(encoding)
     encoding_cos = torch.cos(encoding)
