@@ -35,6 +35,7 @@ def main():
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
   parser.add_argument("--size", help="transformer size", type=int, default=128)
+  parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
@@ -52,6 +53,8 @@ def main():
       n_heads=4,
       dropout=args.dropout,
       padding_idx=dataset.pad)
+  if args.cuda:
+    model = model.cuda()
 
   if os.path.exists(args.weights):
     model.load_state_dict(torch.load(args.weights))
@@ -63,6 +66,9 @@ def main():
     optimizer.zero_grad()
 
     x, y = Variable(x), Variable(y)
+    if args.cuda:
+      x, y = x.cuda(), y.cuda()
+
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     y_top = model(x, y_bottom)
