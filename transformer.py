@@ -114,7 +114,7 @@ class PositionalEncoding(nn.Module):
   def __init__(self, size):
     super().__init__()
 
-    # self.projection = nn.Linear(size * 2, size, bias=False)
+    self.projection = nn.Linear(size * 2, size, bias=False)
 
   def forward(self, x):
     size = x.size()
@@ -138,18 +138,18 @@ class PositionalEncoding(nn.Module):
     # plt.show()
     # fail
 
+    # x = torch.cat([
+    #     x[:, :, 0::2] + encoding_sin,
+    #     x[:, :, 1::2] + encoding_cos,
+    # ], -1)
+
     x = torch.cat([
-        x[:, :, 0::2] + encoding_sin,
-        x[:, :, 1::2] + encoding_cos,
+        x,
+        encoding_sin.repeat(size[0], 1, 1),
+        encoding_cos.repeat(size[0], 1, 1),
     ], -1)
 
-    # x = torch.cat([
-    #     x,
-    #     encoding_sin.repeat(size[0], 1, 1),
-    #     encoding_cos.repeat(size[0], 1, 1),
-    # ], -1)
-    #
-    # x = self.projection(x)
+    x = self.projection(x)
 
     return x
 
