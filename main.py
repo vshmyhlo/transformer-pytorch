@@ -75,7 +75,6 @@ def main():
     y_top = model(x, y_bottom)
     loss = transformer.loss(y_top=y_top, y=y)
     accuracy = transformer.accuracy(y_top=y_top, y=y)
-    accuracy = accuracy * 100
 
     if i % log_interval == 0:
       print(
@@ -83,7 +82,7 @@ def main():
           format(
               i,
               loss.data[0],
-              accuracy.data[0],
+              accuracy.data[0] * 100,
               dataset.decode(y.data[0]),
               dataset.decode(torch.max(y_top, dim=-1)[1].data[0]),
           ))

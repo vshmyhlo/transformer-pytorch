@@ -123,8 +123,9 @@ class PositionalEncoding(nn.Module):
     dim = torch.arange(size[2]).unsqueeze(0).unsqueeze(0)
     # TODO: find good multiplier
     encoding = torch.sin(pos / 10000**(0.75 * dim / size[-1]))
-    # encoding = torch.cos(pos / 10000**(k * dim / size[-1]))
+    # encoding = torch.cos(pos / 10000**(2 * dim / size[-1]))
     encoding = encoding.repeat(x.size(0), 1, 1)
+    encoding = Variable(encoding)
 
     # import matplotlib.pyplot as plt
     # for i in range(size[1]):
@@ -136,8 +137,6 @@ class PositionalEncoding(nn.Module):
     #   plt.title('time')
     # plt.show()
     # fail
-
-    encoding = Variable(encoding)
 
     x = torch.cat([x, encoding], -1)
     x = self.projection(x)
