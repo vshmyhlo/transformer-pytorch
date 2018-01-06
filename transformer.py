@@ -111,18 +111,26 @@ class DecoderLayer(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
-  def __init__(self, size):
+  def __init__(self, size, pe_type='projection'):
     super().__init__()
 
-    self.projection = nn.Linear(size * 2, size, bias=False)
+    self.pe_type = pe_type
+
+    if self.pe_type == 'projection':
+      self.projection = nn.Linear(size * 2, size, bias=False)
 
   def forward(self, x):
     size = x.size()
 
+    if self.pe_type == 'projection':
+      k = 0.75
+    elif self.pe_type == 'addition':
+      k = 2
+
     # TODO: cuda
     pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).cuda()
     dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).cuda()
-    encoding = pos / 10000**(0.75 * dim / size[-1])
+    encoding = pos / 10000**(k * dim / size[-1])
     encoding = Variable(encoding)
     encoding_sin = torch.sin(encoding)
     encoding_cos = torch.cos(encoding)
@@ -138,20 +146,23 @@ class PositionalEncoding(nn.Module):
     # plt.show()
     # fail
 
-    # x = torch.cat([
-    #     x[:, :, 0::2] + encoding_sin,
-    #     x[:, :, 1::2] + encoding_cos,
-    # ], -1)
+    if self.pe_type == 'projection':
+      x = torch.cat([
+          x,
+          encoding_sin.repeat(size[0], 1, 1),
+          encoding_cos.repeat(size[0], 1, 1),
+      ], -1)
 
-    x = torch.cat([
-        x,
-        encoding_sin.repeat(size[0], 1, 1),
-        encoding_cos.repeat(size[0], 1, 1),
-    ], -1)
+      x = self.projection(x)
 
-    x = self.projection(x)
+      return x
+    elif self.pe_type == 'addition':
+      x = torch.cat([
+          x[:, :, 0::2] + encoding_sin,
+          x[:, :, 1::2] + encoding_cos,
+      ], -1)
 
-    return x
+      return x
 
 
 # def loss(y_top, y):

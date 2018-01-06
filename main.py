@@ -9,7 +9,7 @@ import transformer
 
 
 def gen(batch_size):
-  g = dataset.gen(min_len=3, max_len=5)
+  g = dataset.gen(min_len=3, max_len=7)
 
   while True:
     xs, ys = [], []
