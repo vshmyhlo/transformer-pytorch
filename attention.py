@@ -10,7 +10,7 @@ class MultiHeadAttention(nn.Module):
     super().__init__()
 
     self.attentions = nn.ModuleList([Attention(size) for _ in range(n_heads)])
-    self.projection = nn.Linear(size * n_heads, size)
+    self.projection = nn.Linear(size * n_heads, size, bias=False)
 
   def forward(self, x, states):
     xs = [attention(x, states) for attention in self.attentions]

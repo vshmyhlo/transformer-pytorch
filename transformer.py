@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-import attention
+import sublayers
 
 
 class Tranformer(nn.Module):
@@ -34,7 +34,7 @@ class Encoder(nn.Module):
         num_embeddings=num_embeddings,
         embedding_dim=size,
         padding_idx=padding_idx)
-    self.positional_encoding = PositionalEncoding()
+    self.positional_encoding = PositionalEncoding(size)
     self.dropout = nn.Dropout(dropout)
     self.encoder_layers = nn.ModuleList(
         [EncoderLayer(size, n_heads) for _ in range(self.n_layers)])
@@ -64,7 +64,7 @@ class Decoder(nn.Module):
         num_embeddings=num_embeddings,
         embedding_dim=size,
         padding_idx=padding_idx)
-    self.positional_encoding = PositionalEncoding()
+    self.positional_encoding = PositionalEncoding(size)
     self.dropout = nn.Dropout(dropout)
     self.decoder_layers = nn.ModuleList(
         [DecoderLayer(size, n_heads) for _ in range(self.n_layers)])
@@ -84,8 +84,8 @@ class EncoderLayer(nn.Module):
   def __init__(self, size, n_heads):
     super().__init__()
 
-    self.self_attention = SelfAttentionSublayer(size, n_heads)
-    self.feed_forward = FeedForwardSublayer(size)
+    self.self_attention = sublayers.SelfAttentionSublayer(size, n_heads)
+    self.feed_forward = sublayers.FeedForwardSublayer(size)
 
   def forward(self, x):
     x = self.self_attention(x)
@@ -98,9 +98,9 @@ class DecoderLayer(nn.Module):
   def __init__(self, size, n_heads):
     super().__init__()
 
-    self.self_attention = SelfAttentionSublayer(size, n_heads)
-    self.encoder_attention = AttentionSublayer(size, n_heads)
-    self.feed_forward = FeedForwardSublayer(size)
+    self.self_attention = sublayers.SelfAttentionSublayer(size, n_heads)
+    self.encoder_attention = sublayers.AttentionSublayer(size, n_heads)
+    self.feed_forward = sublayers.FeedForwardSublayer(size)
 
   def forward(self, x, states):
     x = self.self_attention(x)
@@ -111,91 +111,38 @@ class DecoderLayer(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
+  def __init__(self, size):
+    super().__init__()
+
+    self.projection = nn.Linear(size * 2, size, bias=False)
+
   def forward(self, x):
     size = x.size()
 
     pos = torch.arange(size[1]).unsqueeze(0).unsqueeze(-1)
     dim = torch.arange(size[2]).unsqueeze(0).unsqueeze(0)
     # TODO: find good multiplier
-    # encoding = torch.sin(pos / 10000**(2 * dim / size[-1]))
-    encoding = torch.sin(pos / 10000**(1 * dim / size[-1]))
-    # encoding = torch.sin(pos / 10000**(0.75 * dim / size[-1]))
+    encoding = torch.sin(pos / 10000**(0.75 * dim / size[-1]))
+    # encoding = torch.cos(pos / 10000**(k * dim / size[-1]))
+    encoding = encoding.repeat(x.size(0), 1, 1)
 
     # import matplotlib.pyplot as plt
-    # plt.plot(encoding[0, :, 0].numpy())
-    # plt.plot(encoding[0, :, 15].numpy())
-    # plt.plot(encoding[0, :, -15].numpy())
-    # plt.plot(encoding[0, :, -1].numpy())
+    # for i in range(size[1]):
+    #   plt.plot(encoding[0, i, :].numpy())
+    #   plt.title('size')
     # plt.show()
-    # plt.plot(encoding[0, 0, :].numpy())
-    # plt.plot(encoding[0, 40, :].numpy())
-    # plt.plot(encoding[0, -40, :].numpy())
-    # plt.plot(encoding[0, -1, :].numpy())
+    # for i in range(size[2]):
+    #   plt.plot(encoding[0, :, i].numpy())
+    #   plt.title('time')
     # plt.show()
     # fail
 
     encoding = Variable(encoding)
 
-    return x + encoding
-
-
-class AttentionSublayer(nn.Module):
-  def __init__(self, size, n_heads):
-    super().__init__()
-
-    self.attention = attention.MultiHeadAttention(size, n_heads)
-    self.layer_norm = LayerNorm(size)
-
-  def forward(self, x, states):
-    saved = x
-
-    x = self.attention(x, states)
-    x = self.layer_norm(saved + x)
+    x = torch.cat([x, encoding], -1)
+    x = self.projection(x)
 
     return x
-
-
-class SelfAttentionSublayer(AttentionSublayer):
-  def forward(self, x):
-    return super().forward(x, x)
-
-
-class FeedForwardSublayer(nn.Module):
-  def __init__(self, size):
-    super().__init__()
-
-    # TODO: check for bias
-    self.fc1 = nn.Linear(size, size * 4)
-    self.fc2 = nn.Linear(4 * size, size)
-    self.layer_norm = LayerNorm(size)
-
-  def forward(self, x):
-    saved = x
-
-    x = self.fc1(x)
-    x = F.relu(x)
-    x = self.fc2(x)
-
-    x = self.layer_norm(saved + x)
-
-    return x
-
-
-class LayerNorm(nn.Module):
-  # TODO: check if this is correct
-  # TODO: train and test states
-
-  def __init__(self, size, eps=1e-6):
-    super().__init__()
-    self.gamma = nn.Parameter(torch.ones(size).unsqueeze(0).unsqueeze(0))
-    self.beta = nn.Parameter(torch.zeros(size).unsqueeze(0).unsqueeze(0))
-    self.eps = eps
-
-  def forward(self, x):
-    mean = x.mean(-1, keepdim=True)
-    std = x.std(-1, keepdim=True)
-
-    return self.gamma * (x - mean) / (std + self.eps) + self.beta
 
 
 # def loss(y_top, y):

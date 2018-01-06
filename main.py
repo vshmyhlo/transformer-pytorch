@@ -31,6 +31,7 @@ def gen(batch_size):
 
 
 def main():
+  # TODO: visualize attention
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
@@ -74,18 +75,25 @@ def main():
     y_top = model(x, y_bottom)
     loss = transformer.loss(y_top=y_top, y=y)
 
-    loss.backward()
-    optimizer.step()
+    # TODO: do not account padding
+    accuracy = torch.max(y_top, dim=-1)[1] == y
+    accuracy = accuracy.float().mean() * 100
 
     if i % log_interval == 0:
-      print('step: {}, loss: {:4f}\n\ttrue: {}\n\tpred: {}\n'.format(
-          i,
-          loss.data[0],
-          dataset.decode(y.data[0]),
-          dataset.decode(torch.max(y_top, dim=-1)[1].data[0]),
-      ))
+      print(
+          'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
+          format(
+              i,
+              loss.data[0],
+              accuracy.data[0],
+              dataset.decode(y.data[0]),
+              dataset.decode(torch.max(y_top, dim=-1)[1].data[0]),
+          ))
 
       torch.save(model.state_dict(), args.weights)
+
+    loss.backward()
+    optimizer.step()
 
 
 if __name__ == '__main__':
