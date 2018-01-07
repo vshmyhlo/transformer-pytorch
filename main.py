@@ -2,6 +2,7 @@ import os
 import argparse
 import torch
 import torch.optim as optim
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 # import python_format_dataset as dataset
