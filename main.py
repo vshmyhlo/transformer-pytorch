@@ -28,7 +28,7 @@ def padded_batch(batch_size, dataset, mode):
       max_y_len = max(max_y_len, len(y))
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
-      if total_size > 10000:
+      if total_size > 4000:
         break
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
