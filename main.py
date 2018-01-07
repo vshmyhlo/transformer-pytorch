@@ -29,7 +29,7 @@ def padded_batch(batch_size, dataset, mode):
       # TODO: async
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
-      if total_size > 4000 and len(xs) % 2 == 0:  # TODO: size per gpu
+      if total_size > 3000 and len(xs) % 2 == 0:  # TODO: size per gpu
         print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}'.
               format(len(xs), max_x_len, max_y_len))
         break
