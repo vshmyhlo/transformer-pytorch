@@ -29,8 +29,8 @@ def padded_batch(batch_size, dataset, mode):
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
       if total_size > 5000:
-        print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}',
-              len(xs), max_x_len, max_y_len)
+        print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}'.
+              format(len(xs), max_x_len, max_y_len))
         break
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
