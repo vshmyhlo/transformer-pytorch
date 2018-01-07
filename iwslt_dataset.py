@@ -34,9 +34,8 @@ def make_vocab(f):
 
 
 class Dataset(object):
-  def __init__(self, dir, mode, source, target):
+  def __init__(self, dir, source, target):
     self.dir = dir
-    self.mode = mode
     self.source = source
     self.target = target
     self.init_vocabs()
@@ -54,9 +53,9 @@ class Dataset(object):
     self.source_vocab_size = len(self.source_id2sym)
     self.target_vocab_size = len(self.target_id2sym)
 
-  def gen(self):
-    source_path = os.path.join(self.dir, self.mode + '.' + self.source)
-    target_path = os.path.join(self.dir, self.mode + '.' + self.target)
+  def gen(self, mode):
+    source_path = os.path.join(self.dir, mode + '.' + self.source)
+    target_path = os.path.join(self.dir, mode + '.' + self.target)
 
     with open(source_path) as f_source, open(target_path) as f_target:
       for x, y in zip(f_source, f_target):

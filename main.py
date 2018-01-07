@@ -9,8 +9,8 @@ import iwslt_dataset
 import transformer
 
 
-def padded_batch(batch_size, dataset):
-  g = dataset.gen()
+def padded_batch(batch_size, dataset, mode):
+  g = dataset.gen(mode)
 
   while True:
     xs, ys = [], []
@@ -33,17 +33,16 @@ def padded_batch(batch_size, dataset):
     yield (x, y)
 
 
-def main():
-  # TODO: visualize attention
-  # TODO: inference
-  # TODO: beam search
-  # TODO: add test set
-
+def make_parser():
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
   parser.add_argument("--size", help="transformer size", type=int, default=128)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
+  parser.add_argument(
+      "--n-layers", help="number of transformer layers", type=int, default=4)
+  parser.add_argument(
+      "--n-heads", help="number of transformer heads", type=int, default=4)
   parser.add_argument(
       "--steps", help="number of steps", type=int, default=1000)
   parser.add_argument(
@@ -52,16 +51,26 @@ def main():
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.2)
+
+  return parser
+
+
+def main():
+  # TODO: visualize attention
+  # TODO: inference
+  # TODO: beam search
+  # TODO: add test set
+
+  parser = make_parser()
   args = parser.parse_args()
 
-  dataset = iwslt_dataset.Dataset(
-      './iwslt15', 'train', source='vi', target='en')
+  dataset = iwslt_dataset.Dataset('./iwslt15', source='vi', target='en')
   model = transformer.Tranformer(
       source_vocab_size=dataset.source_vocab_size,
       target_vocab_size=dataset.target_vocab_size,
       size=args.size,
-      n_layers=2,
-      n_heads=4,
+      n_layers=args.n_layers,
+      n_heads=args.n_heads,
       dropout=args.dropout,
       padding_idx=dataset.pad)
   if args.cuda:
@@ -75,7 +84,7 @@ def main():
   model.train()
   for i, (x, y) in zip(
       range(args.steps),
-      padded_batch(args.batch_size, dataset),
+      padded_batch(args.batch_size, dataset, 'train'),
   ):
     optimizer.zero_grad()
 
