@@ -29,6 +29,7 @@ class Encoder(nn.Module):
     super().__init__()
 
     self.n_layers = n_layers
+    self.n_heads = n_heads
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings,
         embedding_dim=size,
@@ -46,7 +47,7 @@ class Encoder(nn.Module):
     for layer in self.encoder_layers:
       x = layer(x)
 
-    x /= self.n_layers
+    x /= (self.n_heads**2 * self.n_layers)
 
     return x
 
@@ -57,6 +58,7 @@ class Decoder(nn.Module):
     super().__init__()
 
     self.n_layers = n_layers
+    self.n_heads = n_heads
     self.embedding = nn.Embedding(
         num_embeddings=num_embeddings,
         embedding_dim=size,
@@ -73,6 +75,8 @@ class Decoder(nn.Module):
 
     for layer in self.decoder_layers:
       y_bottom = layer(y_bottom, states)
+
+    y_bottom /= self.n_heads
 
     return y_bottom
 
@@ -120,6 +124,7 @@ class PositionalEncoding(nn.Module):
     size = x.size()
 
     if self.pe_type == 'projection':
+      # TODO: search for parameter
       # k = 2
       # k = 0.75
       k = 0.5
