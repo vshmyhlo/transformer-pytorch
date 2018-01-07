@@ -4,13 +4,13 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
-import python_format_dataset as dataset
-# import iwslt_dataset as dataset
+# import python_format_dataset as dataset
+import iwslt_dataset
 import transformer
 
 
-def gen(batch_size):
-  g = dataset.gen(min_len=3, max_len=7)
+def padded_batch(batch_size, dataset):
+  g = dataset.gen()
 
   while True:
     xs, ys = [], []
@@ -54,9 +54,11 @@ def main():
       "--dropout", help="dropout probability", type=float, default=0.2)
   args = parser.parse_args()
 
+  dataset = iwslt_dataset.Dataset(
+      './iwslt15', 'train', source='vi', target='en')
   model = transformer.Tranformer(
-      source_vocab_size=dataset.vocab_size,
-      target_vocab_size=dataset.vocab_size,
+      source_vocab_size=dataset.source_vocab_size,
+      target_vocab_size=dataset.target_vocab_size,
       size=args.size,
       n_layers=2,
       n_heads=4,
@@ -71,7 +73,10 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   model.train()
-  for i, (x, y) in zip(range(args.steps), gen(args.batch_size)):
+  for i, (x, y) in zip(
+      range(args.steps),
+      padded_batch(args.batch_size, dataset),
+  ):
     optimizer.zero_grad()
 
     x, y = Variable(x), Variable(y)
@@ -91,8 +96,8 @@ def main():
               i,
               loss.data[0],
               accuracy.data[0] * 100,
-              dataset.decode(y.data[0]),
-              dataset.decode(torch.max(y_top, dim=-1)[1].data[0]),
+              dataset.decode_target(y.data[0]),
+              dataset.decode_target(torch.max(y_top, dim=-1)[1].data[0]),
           ))
 
       torch.save(model.state_dict(), args.weights)

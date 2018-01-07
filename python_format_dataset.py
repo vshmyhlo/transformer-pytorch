@@ -24,6 +24,8 @@ eos = sym2id['</s>']
 
 vocab_size = len(vocab) + len(special_symbols)
 assert vocab_size == len(sym2id) and vocab_size == len(id2sym)
+source_vocab_size = vocab_size
+target_vocab_size = vocab_size
 
 word_styles = [
     str.lower,
