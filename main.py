@@ -4,7 +4,8 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
-import python_format as dataset
+import python_format_dataset as dataset
+# import iwslt_dataset as dataset
 import transformer
 
 
@@ -22,8 +23,10 @@ def gen(batch_size):
     x_len = [len(x) for x in xs]
     y_len = [len(y) for y in ys]
 
-    x = [x + [dataset.eos] + [dataset.pad] * (max(x_len) - len(x)) for x in xs]
-    y = [y + [dataset.eos] + [dataset.pad] * (max(y_len) - len(y)) for y in ys]
+    x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
+         (max(x_len) - len(x)) for x in xs]
+    y = [[dataset.sos] + y + [dataset.eos] + [dataset.pad] *
+         (max(y_len) - len(y)) for y in ys]
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
@@ -33,6 +36,9 @@ def gen(batch_size):
 def main():
   # TODO: visualize attention
   # TODO: inference
+  # TODO: beam search
+  # TODO: add test set
+
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
