@@ -75,9 +75,9 @@ def main():
       dropout=args.dropout,
       padding_idx=dataset.pad)
 
-  if torch.cuda.device_count() > 1:
-    print("Using", torch.cuda.device_count(), "GPUs")
-    model = nn.DataParallel(model)
+  # if torch.cuda.device_count() > 1:
+  #   print("Using", torch.cuda.device_count(), "GPUs")
+  #   model = nn.DataParallel(model)
 
   if args.cuda:
     model = model.cuda()
