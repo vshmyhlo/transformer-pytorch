@@ -16,21 +16,29 @@ def padded_batch(batch_size, dataset, mode):
   while True:
     xs, ys = [], []
 
+    max_x_len = 0
+    max_y_len = 0
+
     for i in range(batch_size):
       x, y = next(g)
       xs.append(x)
       ys.append(y)
 
-    x_len = [len(x) for x in xs]
-    y_len = [len(y) for y in ys]
+      max_x_len = max(max_x_len, len(x))
+      max_y_len = max(max_y_len, len(y))
+
+      total_size = max_x_len * len(xs) + max_y_len * len(ys)
+      if total_size > 10000:
+        break
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
-         (max(x_len) - len(x)) for x in xs]
+         (max_x_len - len(x)) for x in xs]
     y = [[dataset.sos] + y + [dataset.eos] + [dataset.pad] *
-         (max(y_len) - len(y)) for y in ys]
+         (max_y_len - len(y)) for y in ys]
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
+
     yield (x, y)
 
 
