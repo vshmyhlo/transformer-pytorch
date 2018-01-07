@@ -28,7 +28,7 @@ def padded_batch(batch_size, dataset, mode):
       max_y_len = max(max_y_len, len(y))
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
-      if total_size > 5000:
+      if total_size > 4000 and len(xs) % 2 == 0:
         print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}'.
               format(len(xs), max_x_len, max_y_len))
         break
@@ -73,6 +73,7 @@ def main():
   # TODO: add test set
   # TODO: add multi-gpu
   # TODO: try mask attention
+  # TODO: split batch on gpus
 
   parser = make_parser()
   args = parser.parse_args()
@@ -87,11 +88,11 @@ def main():
       dropout=args.dropout,
       padding_idx=dataset.pad)
 
-  if torch.cuda.device_count() > 1:
-    print("Using", torch.cuda.device_count(), "GPUs")
-    model = nn.DataParallel(model)
-
   if args.cuda:
+    if torch.cuda.device_count() > 1:
+      print("Using", torch.cuda.device_count(), "GPUs")
+      model = nn.DataParallel(model)
+
     model = model.cuda()
 
   if os.path.exists(args.weights):
