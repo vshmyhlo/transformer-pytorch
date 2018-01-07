@@ -112,7 +112,7 @@ class DecoderLayer(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
-  def __init__(self, size, pe_type='projection'):
+  def __init__(self, size, pe_type='addition'):
     super().__init__()
 
     self.pe_type = pe_type

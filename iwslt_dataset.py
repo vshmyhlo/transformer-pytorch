@@ -59,8 +59,9 @@ class Dataset(object):
 
     with open(source_path) as f_source, open(target_path) as f_target:
       for x, y in zip(f_source, f_target):
-        x = x.replace('.', '').strip().split(' ')
-        y = y.replace('.', '').strip().split(' ')
+        x, y = x.strip().split(' '), y.strip().split(' ')
+        if x[-1] == '.': x = x[:-1]
+        if y[-1] == '.': y = y[:-1]
         x, y = self.encode_source(x), self.encode_target(y)
         yield x, y
 
