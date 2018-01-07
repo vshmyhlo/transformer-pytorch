@@ -110,9 +110,6 @@ def main():
 
     x, y = Variable(x), Variable(y)
     if args.cuda:
-      if torch.cuda.device_count() > 1:
-        x, y = nn.DataParallel(x), nn.DataParallel(y)
-
       x, y = x.cuda(), y.cuda()
 
     y_bottom, y = y[:, :-1], y[:, 1:]
