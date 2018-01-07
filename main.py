@@ -28,7 +28,9 @@ def padded_batch(batch_size, dataset, mode):
       max_y_len = max(max_y_len, len(y))
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
-      if total_size > 4000:
+      if total_size > 5000:
+        print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}',
+              len(xs), max_x_len, max_y_len)
         break
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
@@ -38,7 +40,6 @@ def padded_batch(batch_size, dataset, mode):
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
-    print(x.size(), y.size())
 
     yield (x, y)
 
