@@ -38,6 +38,7 @@ def padded_batch(batch_size, dataset, mode):
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
+    print(x.size(), y.size())
 
     yield (x, y)
 
