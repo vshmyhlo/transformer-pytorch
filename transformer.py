@@ -7,13 +7,13 @@ import sublayers
 
 class Tranformer(nn.Module):
   def __init__(self, source_vocab_size, target_vocab_size, size, n_layers,
-               n_heads, dropout, padding_idx):
+               n_heads, pe_type, dropout, padding_idx):
     super().__init__()
 
-    self.encoder = Encoder(source_vocab_size, size, n_layers, n_heads, dropout,
-                           padding_idx)
-    self.decoder = Decoder(target_vocab_size, size, n_layers, n_heads, dropout,
-                           padding_idx)
+    self.encoder = Encoder(source_vocab_size, size, n_layers, n_heads, pe_type,
+                           dropout, padding_idx)
+    self.decoder = Decoder(target_vocab_size, size, n_layers, n_heads, pe_type,
+                           dropout, padding_idx)
     self.projection = nn.Linear(size, target_vocab_size)
 
   def forward(self, x, y_bottom):
@@ -24,7 +24,7 @@ class Tranformer(nn.Module):
 
 
 class Encoder(nn.Module):
-  def __init__(self, num_embeddings, size, n_layers, n_heads, dropout,
+  def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
                padding_idx):
     super().__init__()
 
@@ -34,7 +34,7 @@ class Encoder(nn.Module):
         num_embeddings=num_embeddings,
         embedding_dim=size,
         padding_idx=padding_idx)
-    self.positional_encoding = PositionalEncoding(size)
+    self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
     self.encoder_layers = nn.ModuleList(
         [EncoderLayer(size, n_heads) for _ in range(self.n_layers)])
@@ -53,7 +53,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-  def __init__(self, num_embeddings, size, n_layers, n_heads, dropout,
+  def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
                padding_idx):
     super().__init__()
 
@@ -63,7 +63,7 @@ class Decoder(nn.Module):
         num_embeddings=num_embeddings,
         embedding_dim=size,
         padding_idx=padding_idx)
-    self.positional_encoding = PositionalEncoding(size)
+    self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
     self.decoder_layers = nn.ModuleList(
         [DecoderLayer(size, n_heads) for _ in range(self.n_layers)])
@@ -112,7 +112,7 @@ class DecoderLayer(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
-  def __init__(self, size, pe_type='addition'):
+  def __init__(self, size, pe_type):
     super().__init__()
 
     self.pe_type = pe_type
@@ -138,17 +138,6 @@ class PositionalEncoding(nn.Module):
     encoding = Variable(encoding)
     encoding_sin = torch.sin(encoding)
     encoding_cos = torch.cos(encoding)
-
-    # import matplotlib.pyplot as plt
-    # for i in range(size[1]):
-    #   plt.plot(encoding[0, i, :].data.numpy())
-    #   plt.title('size')
-    # plt.show()
-    # for i in range(size[2]):
-    #   plt.plot(encoding[0, :, i].data.numpy())
-    #   plt.title('time')
-    # plt.show()
-    # fail
 
     if self.pe_type == 'projection':
       x = torch.cat([

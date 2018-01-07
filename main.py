@@ -67,6 +67,12 @@ def make_parser():
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.2)
+  parser.add_argument(
+      "--pe-type",
+      help="positional encoding type",
+      type=str,
+      choices=['projection', 'addition'],
+      default='projection')
 
   return parser
 
@@ -91,6 +97,7 @@ def main():
       size=args.size,
       n_layers=args.n_layers,
       n_heads=args.n_heads,
+      pe_type=args.pe_type,
       dropout=args.dropout,
       padding_idx=dataset.pad)
 
