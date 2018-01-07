@@ -26,9 +26,10 @@ def padded_batch(batch_size, dataset, mode):
 
       max_x_len = max(max_x_len, len(x))
       max_y_len = max(max_y_len, len(y))
+      # TODO: async
 
       total_size = max_x_len * len(xs) + max_y_len * len(ys)
-      if total_size > 4000 and len(xs) % 2 == 0:
+      if total_size > 4000 and len(xs) % 2 == 0:  # TODO: size per gpu
         print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}'.
               format(len(xs), max_x_len, max_y_len))
         break
@@ -109,6 +110,9 @@ def main():
 
     x, y = Variable(x), Variable(y)
     if args.cuda:
+      if torch.cuda.device_count() > 1:
+        x, y = nn.DataParallel(x), nn.DataParallel(y)
+
       x, y = x.cuda(), y.cuda()
 
     y_bottom, y = y[:, :-1], y[:, 1:]
