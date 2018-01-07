@@ -38,7 +38,7 @@ def make_parser():
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
-  parser.add_argument("--size", help="transformer size", type=int, default=128)
+  parser.add_argument("--size", help="transformer size", type=int, default=256)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
       "--n-layers", help="number of transformer layers", type=int, default=4)
@@ -61,6 +61,8 @@ def main():
   # TODO: inference
   # TODO: beam search
   # TODO: add test set
+  # TODO: add multi-gpu
+  # TODO: try mask attention
 
   parser = make_parser()
   args = parser.parse_args()
