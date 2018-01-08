@@ -78,6 +78,7 @@ def make_parser():
 
 
 def main():
+  # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: inference
   # TODO: beam search
@@ -123,14 +124,32 @@ def main():
     x, y = Variable(x), Variable(y)
     if args.cuda:
       x, y = x.cuda(), y.cuda()
-
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     y_top = model(x, y_bottom)
-    loss = transformer.loss(y_top=y_top, y=y)
-    accuracy = transformer.accuracy(y_top=y_top, y=y)
+    loss = transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+    loss.backward()
+    optimizer.step()
 
     if i % args.log_interval == 0:
+      model.eval()
+
+      loss = 0
+      eq, n = 0, 0
+      for x, y in padded_batch(args.batch_size, dataset, 'tst2012'):
+        x, y = Variable(x), Variable(y)
+        if args.cuda:
+          x, y = x.cuda(), y.cuda()
+        y_bottom, y = y[:, :-1], y[:, 1:]
+
+        y_top = model(x, y_bottom)
+        loss += transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+        acc = transformer.accuracy(y_top=y_top, y=y, reduce=False)
+        eq += acc[0]
+        n += acc[1]
+
+      accuracy = eq / n
+
       print(
           'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
           format(
@@ -142,9 +161,7 @@ def main():
           ))
 
       torch.save(model.state_dict(), args.weights)
-
-    loss.backward()
-    optimizer.step()
+      model.train()
 
 
 if __name__ == '__main__':

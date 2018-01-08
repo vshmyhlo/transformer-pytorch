@@ -158,25 +158,24 @@ class PositionalEncoding(nn.Module):
       return x
 
 
-# def loss(y_top, y):
-#   # TODO: check y_top.size(-1) == dataset.vocab_size (73)
+# def loss(y_top, y, padding_idx):
 #   mask = torch.ones(y_top.size(-1)).index_add_(
 #       0,
-#       torch.LongTensor([dataset.pad]),
+#       torch.LongTensor([padding_idx]),
 #       torch.FloatTensor([-1]),
 #   )
 #
 #   loss = F.cross_entropy(
-#       y_top.view(-1, dataset.vocab_size), y.contiguous().view(-1), weight=mask)
+#       y_top.view(-1, y_top.size(-1)), y.contiguous().view(-1), weight=mask)
 #
 #   return loss
 
 
-def loss(y_top, y):
+def loss(y_top, y, padding_idx):
   loss = F.cross_entropy(
       y_top.view(-1, y_top.size(-1)), y.contiguous().view(-1), reduce=False)
   loss = loss.view(y.size())
-  mask = (y != 0).float()
+  mask = (y != padding_idx).float()
   loss = loss * mask
   loss = loss.sum(1) / mask.sum(1)
   loss = loss.mean()
@@ -184,11 +183,14 @@ def loss(y_top, y):
   return loss
 
 
-def accuracy(y_top, y):
+def accuracy(y_top, y, reduce=True):
   y_top = y_top.max(-1)[1]
   mask = (y != 0).float()
   eq = (y_top == y).float()
   eq = eq * mask
-  acc = eq.sum() / mask.sum()
 
-  return acc
+  if reduce:
+    acc = eq.sum() / mask.sum()
+    return acc
+  else:
+    return eq.sum(), mask.sum()
