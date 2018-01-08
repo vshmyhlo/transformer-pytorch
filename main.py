@@ -163,8 +163,8 @@ def main():
           'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
           format(
               i,
-              loss.data[0],
-              acc.data[0] * 100,
+              loss,
+              acc * 100,
               dataset.decode_target(y.data[0]),
               dataset.decode_target(torch.max(y_top, dim=-1)[1].data[0]),
           ))
