@@ -87,6 +87,7 @@ def main():
   # TODO: try mask attention
   # TODO: split batch on gpus
   # TODO: async
+  # TODO: requirements.txt file
 
   parser = make_parser()
   args = parser.parse_args()
@@ -140,7 +141,7 @@ def main():
           range(args.batch_size * 10),  # TODO: compute on all test set
           padded_batch(args.batch_size, dataset, 'tst2012'),
       ):
-        x, y = Variable(x), Variable(y)
+        x, y = Variable(x, volatile=True), Variable(y, volatile=True)
         if args.cuda:
           x, y = x.cuda(), y.cuda()
         y_bottom, y = y[:, :-1], y[:, 1:]
