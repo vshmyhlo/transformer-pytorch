@@ -164,8 +164,8 @@ def main():
 
       for k in range(3):
         print('\ttrue: {}\n\tpred: {}\n'.format(
-            dataset.decode_target(y.data[i]),
-            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[i]),
+            dataset.decode_target(y.data[k]),
+            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]),
         ))
 
       torch.save(model.state_dict(), args.weights)
