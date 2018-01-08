@@ -154,20 +154,19 @@ def main():
         losses.append(loss.data)
         accs.append(acc.data)
         print('eval batch: {}'.format(j), end='\r')
-      print('\r')
+      print('\r', end='')
 
       loss, acc = torch.cat(losses), torch.cat(accs)
       loss, acc = loss.mean(), acc.mean()
 
-      print(
-          'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
-          format(
-              i,
-              loss,
-              acc * 100,
-              dataset.decode_target(y.data[0]),
-              dataset.decode_target(torch.max(y_top, dim=-1)[1].data[0]),
-          ))
+      print('step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
+          i, loss, acc * 100))
+
+      for k in range(3):
+        print('\ttrue: {}\n\tpred: {}\n'.format(
+            dataset.decode_target(y.data[i]),
+            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[i]),
+        ))
 
       torch.save(model.state_dict(), args.weights)
       model.train()
