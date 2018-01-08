@@ -104,7 +104,7 @@ def main():
 
   if args.cuda:
     if torch.cuda.device_count() > 1:
-      print("Using", torch.cuda.device_count(), "GPUs")
+      print('using', torch.cuda.device_count(), 'GPUs')
       model = nn.DataParallel(model)
 
     model = model.cuda()
@@ -136,7 +136,7 @@ def main():
 
       loss = 0
       eq, n = 0, 0
-      for x, y in padded_batch(args.batch_size, dataset, 'tst2012'):
+      for x, y in padded_batch(args.batch_size / 2, dataset, 'tst2012'):
         x, y = Variable(x), Variable(y)
         if args.cuda:
           x, y = x.cuda(), y.cuda()
