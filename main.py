@@ -56,6 +56,12 @@ def make_parser():
   parser.add_argument("--size", help="transformer size", type=int, default=256)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
+      "--dataset-path", help="dataset folder", type=str, default='./iwslt15')
+  parser.add_argument(
+      "--source-lng", help="source language", type=str, default='vi')
+  parser.add_argument(
+      "--target-lng", help="target language", type=str, default='en')
+  parser.add_argument(
       "--n-layers", help="number of transformer layers", type=int, default=4)
   parser.add_argument(
       "--n-heads", help="number of transformer heads", type=int, default=4)
@@ -92,7 +98,8 @@ def main():
   parser = make_parser()
   args = parser.parse_args()
 
-  dataset = iwslt_dataset.Dataset('./iwslt15', source='vi', target='en')
+  dataset = iwslt_dataset.Dataset(
+      args.dataset_path, source=args.source_lng, target=args.target_lng)
   model = transformer.Tranformer(
       source_vocab_size=dataset.source_vocab_size,
       target_vocab_size=dataset.target_vocab_size,
