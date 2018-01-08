@@ -134,28 +134,36 @@ def main():
     if i % args.log_interval == 0:
       model.eval()
 
-      loss = 0
-      eq, n = 0, 0
-      for x, y in padded_batch(args.batch_size / 2, dataset, 'tst2012'):
+      losses = []
+      accs = []
+      for j, (x, y) in zip(
+          range(args.batch_size * 10),  # TODO: compute on all test set
+          padded_batch(args.batch_size, dataset, 'tst2012'),
+      ):
         x, y = Variable(x), Variable(y)
         if args.cuda:
           x, y = x.cuda(), y.cuda()
         y_bottom, y = y[:, :-1], y[:, 1:]
 
         y_top = model(x, y_bottom)
-        loss += transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-        acc = transformer.accuracy(y_top=y_top, y=y, reduce=False)
-        eq += acc[0]
-        n += acc[1]
+        loss = transformer.loss(
+            y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
+        acc = transformer.accuracy(
+            y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
+        losses.append(loss)
+        accs.append(acc)
+        print('eval batch: {}'.format(j), end='\r')
+      print('\r')
 
-      accuracy = eq / n
+      loss, acc = torch.cat(losses), torch.cat(accs)
+      loss, acc = loss.mean(), acc.mean()
 
       print(
           'step: {}, loss: {:.4f}, accuracy: {:.2f}\n\ttrue: {}\n\tpred: {}\n'.
           format(
               i,
               loss.data[0],
-              accuracy.data[0] * 100,
+              acc.data[0] * 100,
               dataset.decode_target(y.data[0]),
               dataset.decode_target(torch.max(y_top, dim=-1)[1].data[0]),
           ))
