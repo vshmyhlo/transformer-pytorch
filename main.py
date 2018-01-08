@@ -151,8 +151,8 @@ def main():
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
         acc = transformer.accuracy(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-        losses.append(loss)
-        accs.append(acc)
+        losses.append(loss.data)
+        accs.append(acc.data)
         print('eval batch: {}'.format(j), end='\r')
       print('\r')
 
