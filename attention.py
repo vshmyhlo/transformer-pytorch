@@ -12,8 +12,8 @@ class MultiHeadAttention(nn.Module):
     self.attentions = nn.ModuleList([Attention(size) for _ in range(n_heads)])
     self.projection = nn.Linear(size * n_heads, size, bias=False)
 
-  def forward(self, x, states):
-    xs = [attention(x, states) for attention in self.attentions]
+  def forward(self, x, states, mask):
+    xs = [attention(x, states, mask) for attention in self.attentions]
     x = torch.cat(xs, -1)
     x = self.projection(x)
     return x
@@ -28,12 +28,14 @@ class Attention(nn.Module):
     self.vl = nn.Linear(size, size, bias=False)
     self.attention = LuongAttention(size)
 
-  def forward(self, x, states):
+  def forward(self, x, states, mask):
     q = self.ql(x)
     k = self.kl(states)
     v = self.vl(states)
 
     scores = self.attention(q, k)
+    if mask:
+      scores = scores * mask
     scores = scores.unsqueeze(-1)
     v = v.unsqueeze(-3)
     attended = v * scores

@@ -3,6 +3,19 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import sublayers
+import numpy as np
+
+
+def get_attn_subsequent_mask(seq):
+  # TODO: check how this works
+  ''' Get an attention mask to avoid using the subsequent info.'''
+  assert seq.dim() == 2
+  attn_shape = (seq.size(0), seq.size(1), seq.size(1))
+  subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
+  subsequent_mask = torch.from_numpy(subsequent_mask)
+  if seq.is_cuda:
+    subsequent_mask = subsequent_mask.cuda()
+  return subsequent_mask
 
 
 class Tranformer(nn.Module):
@@ -69,12 +82,15 @@ class Decoder(nn.Module):
         [DecoderLayer(size, n_heads) for _ in range(self.n_layers)])
 
   def forward(self, y_bottom, states):
+    self_attention_mask = get_attn_subsequent_mask(y_bottom)
+
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
     y_bottom = self.dropout(y_bottom)
 
     for layer in self.decoder_layers:
-      y_bottom = layer(y_bottom, states)
+      y_bottom = layer(
+          y_bottom, states, self_attention_mask=self_attention_mask)
 
     y_bottom /= self.n_heads
 
@@ -103,8 +119,8 @@ class DecoderLayer(nn.Module):
     self.encoder_attention = sublayers.AttentionSublayer(size, n_heads)
     self.feed_forward = sublayers.FeedForwardSublayer(size)
 
-  def forward(self, x, states):
-    x = self.self_attention(x)
+  def forward(self, x, states, self_attention_mask):
+    x = self.self_attention(x, self_attention_mask)
     x = self.encoder_attention(x, states)
     x = self.feed_forward(x)
 
@@ -131,9 +147,10 @@ class PositionalEncoding(nn.Module):
     elif self.pe_type == 'addition':
       k = 2
 
-    pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1).type_as(
-        x.data)
-    dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0).type_as(x.data)
+    pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1)
+    dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0)
+    if x.is_cuda:
+      pos, dim = pos.cuda(), dim.cuda()
     encoding = pos / 10000**(k * dim / size[-1])
     encoding = Variable(encoding)
     encoding_sin = torch.sin(encoding)

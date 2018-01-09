@@ -95,6 +95,7 @@ def main():
   # TODO: async
   # TODO: requirements.txt file
   # TODO: attention: in decoder self attention only attend to previous values
+  # TODO: try attention padding mask
 
   parser = make_parser()
   args = parser.parse_args()

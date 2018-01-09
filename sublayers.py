@@ -11,18 +11,18 @@ class AttentionSublayer(nn.Module):
     self.attention = attention.MultiHeadAttention(size, n_heads)
     self.layer_norm = LayerNorm(size)
 
-  def forward(self, x, states):
+  def forward(self, x, states, mask=None):
     saved = x
 
-    x = self.attention(x, states)
+    x = self.attention(x, states, mask)
     x = self.layer_norm(saved + x)
 
     return x
 
 
 class SelfAttentionSublayer(AttentionSublayer):
-  def forward(self, x):
-    return super().forward(x, x)
+  def forward(self, x, mask=None):
+    return super().forward(x, x, mask)
 
 
 class FeedForwardSublayer(nn.Module):
