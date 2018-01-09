@@ -154,13 +154,6 @@ def main():
           x, y = x.cuda(), y.cuda()
         y_bottom, y = y[:, :-1], y[:, 1:]
 
-        start = Variable(torch.LongTensor([[1]]) * dataset.sos)
-        if args.cuda:
-          start = start.cuda()
-        inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
-        print('\tinf true:', dataset.decode_target(y.data[0]))
-        print('\tinf pred:', dataset.decode_target(inf.data[0]))
-
         y_top = model(x, y_bottom)
         loss = transformer.loss(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
@@ -182,6 +175,14 @@ def main():
             dataset.decode_target(y.data[k]),
             dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]),
         ))
+
+      print('inference:')
+      start = Variable(torch.LongTensor([[1]]) * dataset.sos)
+      if args.cuda:
+        start = start.cuda()
+      inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
+      print('\tinf true:', dataset.decode_target(y.data[0]))
+      print('\tinf pred:', dataset.decode_target(inf.data[0]))
 
       torch.save(model.state_dict(), args.weights)
       model.train()
