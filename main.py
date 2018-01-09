@@ -163,7 +163,7 @@ def main():
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
         losses.append(loss.data)
         accs.append(acc.data)
-        print('eval batch: {}'.format(j), end='\r')
+        print(colored('eval batch: {}'.format(j), 'yellow'), end='\r')
       print('\r', end='')
 
       loss, acc = torch.cat(losses), torch.cat(accs)
@@ -173,7 +173,7 @@ def main():
           colored(
               'step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
                   i, loss, acc * 100),
-              'red',
+              'green',
           ))
 
       for k in range(3):
