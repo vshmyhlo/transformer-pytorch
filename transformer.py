@@ -175,10 +175,7 @@ def accuracy(y_top, y, padding_idx, reduce=True):
     return eq.float()
 
 
-def infer(model, x, sos_idx, max_len):
-  from torch.autograd import Variable
-  y_bottom = Variable(torch.LongTensor([[1]]) * sos_idx)
-
+def infer(model, x, y_bottom, max_len):
   while y_bottom.size(1) < max_len:
     y_top = model(x, y_bottom)
     y_top = y_top.max(-1)[1]
