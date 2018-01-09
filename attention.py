@@ -34,8 +34,8 @@ class Attention(nn.Module):
     v = self.vl(states)
 
     scores = self.attention(q, k)
-    if mask:
-      scores = scores * mask
+    if mask is not None:
+      scores = scores * mask.float()
     scores = scores.unsqueeze(-1)
     v = v.unsqueeze(-3)
     attended = v * scores

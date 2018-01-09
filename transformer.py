@@ -83,6 +83,7 @@ class Decoder(nn.Module):
 
   def forward(self, y_bottom, states):
     self_attention_mask = get_attn_subsequent_mask(y_bottom)
+    self_attention_mask = Variable(self_attention_mask)
 
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
