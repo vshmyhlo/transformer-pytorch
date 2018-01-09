@@ -182,7 +182,7 @@ def main():
             dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]),
         ))
 
-      print('inference:')
+      print(colored('inference:', 'yellow'))
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
       if args.cuda:
         start = start.cuda()
