@@ -1,5 +1,6 @@
 import os
 import argparse
+from termcolor import colored
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -168,8 +169,12 @@ def main():
       loss, acc = torch.cat(losses), torch.cat(accs)
       loss, acc = loss.mean(), acc.mean()
 
-      print('step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
-          i, loss, acc * 100))
+      print(
+          colored(
+              'step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
+                  i, loss, acc * 100),
+              'red',
+          ))
 
       for k in range(3):
         print('\ttrue: {}\n\tpred: {}\n'.format(
