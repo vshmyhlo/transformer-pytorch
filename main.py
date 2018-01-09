@@ -155,6 +155,8 @@ def main():
         y_bottom, y = y[:, :-1], y[:, 1:]
 
         start = Variable(torch.LongTensor([[1]]) * dataset.sos)
+        if args.cuda:
+          start = start.cuda()
         inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
         print('\tinf true:', dataset.decode_target(y.data[0]))
         print('\tinf pred:', dataset.decode_target(inf.data[0]))
