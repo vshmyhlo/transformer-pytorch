@@ -59,9 +59,9 @@ def make_parser():
   parser.add_argument(
       "--dataset-path", help="dataset folder", type=str, default='./iwslt15')
   parser.add_argument(
-      "--source-lng", help="source language", type=str, default='vi')
+      "--source-lng", help="source language", type=str, default='en')
   parser.add_argument(
-      "--target-lng", help="target language", type=str, default='en')
+      "--target-lng", help="target language", type=str, default='vi')
   parser.add_argument(
       "--n-layers", help="number of transformer layers", type=int, default=4)
   parser.add_argument(
@@ -98,6 +98,7 @@ def main():
   # TODO: attention: in decoder self attention only attend to previous values
   # TODO: try attention padding mask
   # TODO: infer prediction should be the same as eval prediction
+  # TODO: eval loss, accuracy calculation refactor
 
   parser = make_parser()
   args = parser.parse_args()
@@ -175,10 +176,10 @@ def main():
               i, loss, acc * 100)))
 
       for k in range(3):
-        print('\ttrue: {}\n\tpred: {}\n'.format(
-            dataset.decode_target(y.data[k]),
-            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]),
-        ))
+        print(warning('true:'), dataset.decode_target(y.data[k]))
+        print(
+            warning('pred:'),
+            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]))
 
       print(warning('inference:'))
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
