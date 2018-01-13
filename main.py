@@ -1,6 +1,5 @@
 import os
 import argparse
-from termcolor import colored
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -9,6 +8,7 @@ from torch.autograd import Variable
 # import python_format_dataset as dataset
 import iwslt_dataset
 import transformer
+from utils import success, warning
 
 
 def padded_batch(batch_size, dataset, mode):
@@ -97,6 +97,7 @@ def main():
   # TODO: requirements.txt file
   # TODO: attention: in decoder self attention only attend to previous values
   # TODO: try attention padding mask
+  # TODO: infer prediction should be the same as eval prediction
 
   parser = make_parser()
   args = parser.parse_args()
@@ -163,18 +164,15 @@ def main():
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
         losses.append(loss.data)
         accs.append(acc.data)
-        print(colored('eval batch: {}'.format(j), 'yellow'), end='\r')
+        print(warning('eval batch: {}'.format(j)), end='\r')
       print('\r', end='')
 
       loss, acc = torch.cat(losses), torch.cat(accs)
       loss, acc = loss.mean(), acc.mean()
 
       print(
-          colored(
-              'step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
-                  i, loss, acc * 100),
-              'green',
-          ))
+          success('step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
+              i, loss, acc * 100)))
 
       for k in range(3):
         print('\ttrue: {}\n\tpred: {}\n'.format(
@@ -182,13 +180,13 @@ def main():
             dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]),
         ))
 
-      print(colored('inference:', 'yellow'))
+      print(warning('inference:'))
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
       if args.cuda:
         start = start.cuda()
       inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
-      print('\tinf true:', dataset.decode_target(y.data[0]))
-      print('\tinf pred:', dataset.decode_target(inf.data[0]))
+      print('\ttrue:', dataset.decode_target(y.data[0]))
+      print('\tpred:', dataset.decode_target(inf.data[0]))
 
       torch.save(model.state_dict(), args.weights)
       model.train()
