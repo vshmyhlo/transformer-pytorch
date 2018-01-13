@@ -1,19 +1,5 @@
 import os
 
-# def gen(dir, dataset):
-#   with open(os.path.join(dir, dataset + '.en')) as f_en, open(
-#       os.path.join(dir, dataset + '.vi')) as f_vi:
-#     for row_en, row_vi in zip(f_en, f_vi):
-#       row_en, row_vi = row_en.split(' '), row_vi.split(' ')
-#       print(row_en)
-#       print(row_vi)
-#       fail
-
-# yield 1, 2
-
-# def build_sym2id(id2sym):
-#   return {sym: id for id, sym in enumerate(id2sym)}
-
 
 def encode(syms, sym2id):
   return [sym2id[sym] if sym in sym2id else sym2id['<unk>'] for sym in syms]

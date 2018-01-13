@@ -176,18 +176,25 @@ def main():
               i, loss, acc * 100)))
 
       for k in range(3):
-        print(warning('true:'), dataset.decode_target(y.data[k]))
+        print(
+            warning('true:'),
+            dataset.decode_target(y.data[k]).split('</s>')[0])
         print(
             warning('pred:'),
-            dataset.decode_target(torch.max(y_top, dim=-1)[1].data[k]))
+            dataset.decode_target(torch.max(
+                y_top, dim=-1)[1].data[k]).split('</s>')[0])
 
       print(warning('inference:'))
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
       if args.cuda:
         start = start.cuda()
       inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
-      print('\ttrue:', dataset.decode_target(y.data[0]))
-      print('\tpred:', dataset.decode_target(inf.data[0]))
+      print(
+          warning('true:'),
+          dataset.decode_target(y.data[0]).split('</s>')[0])
+      print(
+          warning('pred:'),
+          dataset.decode_target(inf.data[0]).split('</s>')[0])
 
       torch.save(model.state_dict(), args.weights)
       model.train()
