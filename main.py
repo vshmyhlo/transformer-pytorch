@@ -147,8 +147,9 @@ def main():
     if i % args.log_interval == 0:
       model.eval()
 
-      losses = []
-      accs = []
+      loss = 0
+      accuracy = 0
+      n_samples = 0
       for j, (x, y) in zip(
           range(args.batch_size * 10),  # TODO: compute on all test set
           padded_batch(args.batch_size, dataset, 'tst2012'),
@@ -159,21 +160,25 @@ def main():
         y_bottom, y = y[:, :-1], y[:, 1:]
 
         y_top = model(x, y_bottom)
-        loss = transformer.loss(
+        l = transformer.loss(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-        acc = transformer.accuracy(
+        a = transformer.accuracy(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-        losses.append(loss.data)
-        accs.append(acc.data)
+
+        assert l.size() == a.size()
+        loss += l.data.sum()
+        accuracy += a.data.sum()
+        n_samples += l.size(0)
+
         print(warning('eval batch: {}'.format(j)), end='\r')
       print('\r', end='')
 
-      loss, acc = torch.cat(losses), torch.cat(accs)
-      loss, acc = loss.mean(), acc.mean()
+      loss /= n_samples
+      accuracy /= n_samples
 
       print(
           success('step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
-              i, loss, acc * 100)))
+              i, loss, accuracy * 100)))
 
       for k in range(3):
         print(
@@ -184,7 +189,7 @@ def main():
             dataset.decode_target(torch.max(
                 y_top, dim=-1)[1].data[k]).split('</s>')[0])
 
-      print(warning('inference:'))
+      print(success('inference:'))
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
       if args.cuda:
         start = start.cuda()
