@@ -163,11 +163,9 @@ def main():
         summary.add((loss.data, accuracy.data))
         print(danger('train batch: {}'.format(i)), end='\r')
       except RuntimeError as e:
-        print(e.args[0])
-        print(e.args[0].startswith('cuda runtime error'))
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           size = x.size(1) + y.size(1)
-          len2batch_size[size] = x.size(0) / 2
+          len2batch_size[size] = x.size(0) // 2
           print(len2batch_size)
         else:
           raise e
