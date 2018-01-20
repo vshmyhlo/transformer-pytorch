@@ -167,9 +167,12 @@ class PositionalEncoding(nn.Module):
 
       return x
     elif self.pe_type == 'addition':
-      x = torch.cat([
-          x[:, :, 0::2] + encoding_sin,
-          x[:, :, 1::2] + encoding_cos,
-      ], -1)
+      encoding = torch.cat([encoding_sin, encoding_cos], -1)
+      x += encoding
+
+      # x = torch.cat([
+      #     x[:, :, 0::2] + encoding_sin,
+      #     x[:, :, 1::2] + encoding_cos,
+      # ], -1)
 
       return x

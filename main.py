@@ -81,7 +81,7 @@ def make_parser():
       help="positional encoding type",
       type=str,
       choices=['projection', 'addition'],
-      default='projection')
+      default='addition')
 
   return parser
 
@@ -152,6 +152,7 @@ def main():
     print(danger(i), end='\r')
 
     if i % args.log_interval == 0:
+      print(success('step: {}'.format(i)))
       model.eval()
 
       loss = 0
@@ -184,8 +185,8 @@ def main():
       accuracy /= n_samples
 
       print(
-          success('step: {}, loss: {:.4f}, accuracy: {:.2f}'.format(
-              i, loss, accuracy * 100)))
+          success('loss: {:.4f}, accuracy: {:.2f}'.format(
+              loss, accuracy * 100)))
 
       for k in range(3):
         print(
