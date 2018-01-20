@@ -134,6 +134,7 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   i = 0
+  train_gen = padded_batch(batch_size, dataset, 'train')
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
@@ -141,12 +142,10 @@ def main():
     summary = metrics.Summary((0, 0))
     model.train()
 
-    for _, (x, y) in zip(
-        range(args.log_interval),
-        padded_batch(batch_size, dataset, 'train'),
-    ):
+    for _ in range(args.log_interval):
       optimizer.zero_grad()
 
+      x, y = next(train_gen)
       x, y = Variable(x), Variable(y)
       if args.cuda:
         x, y = x.cuda(), y.cuda()
