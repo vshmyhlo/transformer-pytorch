@@ -157,7 +157,7 @@ def main():
         loss.mean().backward()
         optimizer.step()
       except RuntimeError as e:
-        print(e)
+        print(e.args)
 
       summary.add((loss.data, accuracy.data))
       print(danger('train batch: {}'.format(i)), end='\r')
