@@ -144,17 +144,20 @@ def main():
     for _ in range(args.log_interval):
       optimizer.zero_grad()
 
-      x, y = next(train_gen)
-      x, y = Variable(x), Variable(y)
-      if args.cuda:
-        x, y = x.cuda(), y.cuda()
-      y_bottom, y = y[:, :-1], y[:, 1:]
+      try:
+        x, y = next(train_gen)
+        x, y = Variable(x), Variable(y)
+        if args.cuda:
+          x, y = x.cuda(), y.cuda()
+        y_bottom, y = y[:, :-1], y[:, 1:]
 
-      y_top = model(x, y_bottom)
-      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
-      loss.mean().backward()
-      optimizer.step()
+        y_top = model(x, y_bottom)
+        loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+        accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+        loss.mean().backward()
+        optimizer.step()
+      except RuntimeError as e:
+        print(e)
 
       summary.add((loss.data, accuracy.data))
       print(danger('train batch: {}'.format(i)), end='\r')
