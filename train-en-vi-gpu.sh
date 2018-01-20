@@ -1,0 +1,12 @@
+python3 main.py \
+  --cuda \
+  --weights weights \
+  --learning-rate 0.0001 \
+  --steps 10000 \
+  --n-heads 4 \
+  --n-layers 4 \
+  --batch-size 16 \
+  --log-interval 200 \
+  --size=256 \
+  --source-lng en \
+  --target-lng vi
