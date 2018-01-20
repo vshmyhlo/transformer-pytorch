@@ -133,85 +133,87 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-  model.train()
-  for i, (x, y) in zip(
-      range(args.steps),
-      padded_batch(batch_size, dataset, 'train'),
-  ):
-    optimizer.zero_grad()
+  train_gen = padded_batch(batch_size, dataset, 'train')
+  test_gen = padded_batch(batch_size, dataset, 'tst2012')
+  i = 0
+  while i < args.steps:
+    print(success('step: {}'.format(i)))
 
-    x, y = Variable(x), Variable(y)
-    if args.cuda:
-      x, y = x.cuda(), y.cuda()
-    y_bottom, y = y[:, :-1], y[:, 1:]
+    # Train ####################################################################
+    summary = metrics.Summary((0, 0))
+    model.train()
 
-    y_top = model(x, y_bottom)
-    loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-    loss.backward()
-    optimizer.step()
-    print(danger(i), end='\r')
+    while i % args.log_interval != 0:
+      optimizer.zero_grad()
 
-    if i % args.log_interval == 0:
-      print(success('step: {}'.format(i)))
-      model.eval()
-
-      loss = 0
-      accuracy = 0
-      n_samples = 0
-      for j, (x, y) in zip(
-          range(batch_size * 10),  # TODO: compute on all test set
-          padded_batch(batch_size, dataset, 'tst2012'),
-      ):
-        x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-        if args.cuda:
-          x, y = x.cuda(), y.cuda()
-        y_bottom, y = y[:, :-1], y[:, 1:]
-
-        y_top = model(x, y_bottom)
-        l = metrics.loss(
-            y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-        a = metrics.accuracy(
-            y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-
-        assert l.size() == a.size()
-        loss += l.data.sum()
-        accuracy += a.data.sum()
-        n_samples += l.size(0)
-
-        print(danger('eval batch: {}'.format(j)), end='\r')
-      print('\r', end='')
-
-      loss /= n_samples
-      accuracy /= n_samples
-
-      print(
-          success('loss: {:.4f}, accuracy: {:.2f}'.format(
-              loss, accuracy * 100)))
-
-      for k in range(3):
-        print(
-            warning('true:'),
-            dataset.decode_target(y.data[k]).split('</s>')[0])
-        print(
-            warning('pred:'),
-            dataset.decode_target(torch.max(
-                y_top, dim=-1)[1].data[k]).split('</s>')[0])
-
-      print(success('inference:'))
-      start = Variable(torch.LongTensor([[1]]) * dataset.sos)
+      x, y = next(train_gen)
+      x, y = Variable(x), Variable(y)
       if args.cuda:
-        start = start.cuda()
-      inf = inference.Inferer(model)(x[:1], y_bottom=start, max_len=100)
+        x, y = x.cuda(), y.cuda()
+      y_bottom, y = y[:, :-1], y[:, 1:]
+
+      y_top = model(x, y_bottom)
+      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+      loss.mean().backward()
+      optimizer.step()
+
+      summary.add((loss.data, accuracy.data))
+      print(danger('train batch: {}'.format(i)), end='\r')
+
+      i += 1
+
+    loss, accuracy = summary.calculate()
+    print(
+        success('(train) loss: {:.4f}, accuracy: {:.2f}'.format(
+            loss, accuracy * 100)))
+
+    # Eval #####################################################################
+    summary = metrics.Summary((0, 0))
+    model.eval()
+
+    for j in range(batch_size * 10):  # TODO: compute on all test set
+      x, y = next(test_gen)
+      x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+      if args.cuda:
+        x, y = x.cuda(), y.cuda()
+      y_bottom, y = y[:, :-1], y[:, 1:]
+
+      y_top = model(x, y_bottom)
+      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+
+      summary.add((loss.data, accuracy.data))
+      print(danger('eval batch: {}'.format(j)), end='\r')
+
+    loss, accuracy = summary.calculate()
+    print(
+        success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
+            loss, accuracy * 100)))
+
+    # Infer ####################################################################
+    for k in range(3):
       print(
           warning('true:'),
-          dataset.decode_target(y.data[0]).split('</s>')[0])
+          dataset.decode_target(y.data[k]).split('</s>')[0])
       print(
           warning('pred:'),
-          dataset.decode_target(inf.data[0]).split('</s>')[0])
+          dataset.decode_target(torch.max(y_top,
+                                          dim=-1)[1].data[k]).split('</s>')[0])
 
-      torch.save(base_model.state_dict(), args.weights)
-      print(warning('state saved to'), args.weights)
-      model.train()
+    print(success('inference:'))
+    start = Variable(torch.LongTensor([[1]]) * dataset.sos)
+    if args.cuda:
+      start = start.cuda()
+    inf = inference.Inferer(model)(x[:1], y_bottom=start, max_len=100)
+    print(warning('true:'), dataset.decode_target(y.data[0]).split('</s>')[0])
+    print(
+        warning('pred:'),
+        dataset.decode_target(inf.data[0]).split('</s>')[0])
+
+    # Saving ###################################################################
+    torch.save(base_model.state_dict(), args.weights)
+    print(warning('state saved to'), args.weights)
 
 
 if __name__ == '__main__':
