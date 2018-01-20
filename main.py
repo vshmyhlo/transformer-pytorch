@@ -106,7 +106,7 @@ def main():
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
-  model = transformer.Tranformer(
+  base_model = transformer.Tranformer(
       source_vocab_size=dataset.source_vocab_size,
       target_vocab_size=dataset.target_vocab_size,
       size=args.size,
@@ -115,16 +115,18 @@ def main():
       pe_type=args.pe_type,
       dropout=args.dropout,
       padding_idx=dataset.pad)
+  model = base_model
 
   if args.cuda:
     if torch.cuda.device_count() > 1:
-      print('using', torch.cuda.device_count(), 'GPUs')
+      print(warning('using {} GPUs'.format(torch.cuda.device_count())))
       model = nn.DataParallel(model)
 
     model = model.cuda()
 
   if os.path.exists(args.weights):
-    model.load_state_dict(torch.load(args.weights))
+    print(warning('loading state from'), args.weights)
+    base_model.load_state_dict(torch.load(args.weights))
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
@@ -202,7 +204,7 @@ def main():
           warning('pred:'),
           dataset.decode_target(inf.data[0]).split('</s>')[0])
 
-      torch.save(model.state_dict(), args.weights)
+      torch.save(base_model.state_dict(), args.weights)
       model.train()
       print(warning('model saved to'), args.weights)
 
