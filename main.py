@@ -1,4 +1,5 @@
 import os
+import itertools
 import argparse
 import torch
 import torch.optim as optim
@@ -172,8 +173,7 @@ def main():
     summary = metrics.Summary((0, 0))
     model.eval()
 
-    for j in range(batch_size * 10):  # TODO: compute on all test set
-      x, y = next(test_gen)
+    for j, (x, y) in zip(itertools.count(), test_gen):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       if args.cuda:
         x, y = x.cuda(), y.cuda()
