@@ -103,6 +103,7 @@ def main():
 
   parser = make_parser()
   args = parser.parse_args()
+  batch_size = args.batch_size
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
@@ -121,6 +122,7 @@ def main():
     if torch.cuda.device_count() > 1:
       print(warning('using {} GPUs'.format(torch.cuda.device_count())))
       model = nn.DataParallel(model)
+      batch_size = batch_size * torch.cuda.device_count()
 
     model = model.cuda()
 
@@ -133,7 +135,7 @@ def main():
   model.train()
   for i, (x, y) in zip(
       range(args.steps),
-      padded_batch(args.batch_size, dataset, 'train'),
+      padded_batch(batch_size, dataset, 'train'),
   ):
     optimizer.zero_grad()
 
@@ -155,8 +157,8 @@ def main():
       accuracy = 0
       n_samples = 0
       for j, (x, y) in zip(
-          range(args.batch_size * 10),  # TODO: compute on all test set
-          padded_batch(args.batch_size, dataset, 'tst2012'),
+          range(batch_size * 10),  # TODO: compute on all test set
+          padded_batch(batch_size, dataset, 'tst2012'),
       ):
         x, y = Variable(x, volatile=True), Variable(y, volatile=True)
         if args.cuda:
