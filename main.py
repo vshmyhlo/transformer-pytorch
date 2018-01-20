@@ -103,7 +103,6 @@ def main():
 
   parser = make_parser()
   args = parser.parse_args()
-  batch_size = args.batch_size
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
@@ -118,11 +117,12 @@ def main():
       padding_idx=dataset.pad)
   model = base_model
 
+  device_count = 1
   if args.cuda:
     if torch.cuda.device_count() > 1:
-      print(warning('using {} GPUs'.format(torch.cuda.device_count())))
+      device_count = torch.cuda.device_count()
+      print(warning('using {} GPUs'.format(device_count)))
       model = nn.DataParallel(model)
-      batch_size = batch_size * torch.cuda.device_count()
 
     model = model.cuda()
 
@@ -133,7 +133,7 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   i = 0
-  train_gen = padded_batch(batch_size, dataset, 'train')
+  train_gen = padded_batch(args.batch_size, dataset, 'train')
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
@@ -157,7 +157,10 @@ def main():
         loss.mean().backward()
         optimizer.step()
       except RuntimeError as e:
-        print(e.args)
+        if e.args[0].startswith('cuda runtime error (2) : out of memory'):
+          print(e)
+        else:
+          raise e
 
       summary.add((loss.data, accuracy.data))
       print(danger('train batch: {}'.format(i)), end='\r')
@@ -175,7 +178,7 @@ def main():
 
     for j, (x, y) in zip(
         itertools.count(),
-        padded_batch(batch_size, dataset, 'tst2012'),
+        padded_batch(args.batch_size, dataset, 'tst2012'),
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       if args.cuda:
