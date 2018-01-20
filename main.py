@@ -146,6 +146,7 @@ def main():
     loss = transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
     loss.backward()
     optimizer.step()
+    print(danger(i, end='\r'))
 
     if i % args.log_interval == 0:
       model.eval()
