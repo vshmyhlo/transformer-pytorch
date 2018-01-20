@@ -14,33 +14,32 @@ import metrics
 from utils import success, warning, danger
 
 
+def sorted_gen(dataset, mode):
+  for x, y in sorted(
+      dataset.gen(mode),
+      key=lambda xy: len(xy[0]) + len(xy[1]),
+      reverse=True,
+  ):
+    yield x, y
+
+
 def padded_batch(batch_size, dataset, mode):
-  g = dataset.gen(mode)
+  g = sorted_gen(dataset, mode)
 
   while True:
     xs, ys = [], []
 
     max_x_len = 0
     max_y_len = 0
-    total_size = 0
 
-    while len(xs) < batch_size and total_size < 4000:
+    for _ in range(batch_size):
       x, y = next(g)
-
-      if len(x) > 200 or len(y) > 200:
-        continue
 
       xs.append(x)
       ys.append(y)
 
       max_x_len = max(max_x_len, len(x))
       max_y_len = max(max_y_len, len(y))
-      total_size = max_x_len * len(xs) + max_y_len * len(ys)
-
-    # if total_size > 4000 and len(xs) % 2 == 0:
-    #   print('batch truncated: batch_size: {}, max_x_len: {}, max_y_len: {}'.
-    #         format(len(xs), max_x_len, max_y_len))
-    #   break
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
          (max_x_len - len(x)) for x in xs]
