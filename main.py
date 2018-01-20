@@ -9,6 +9,7 @@ from torch.autograd import Variable
 import iwslt_dataset
 import transformer
 import inference
+import metrics
 from utils import success, warning, danger
 
 
@@ -127,7 +128,7 @@ def main():
     model = model.cuda()
 
   if os.path.exists(args.weights):
-    print(warning('loading state from'), args.weights)
+    print(warning('state loaded from'), args.weights)
     base_model.load_state_dict(torch.load(args.weights))
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
@@ -145,7 +146,7 @@ def main():
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     y_top = model(x, y_bottom)
-    loss = transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+    loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
     loss.backward()
     optimizer.step()
     print(danger(i), end='\r')
@@ -166,9 +167,9 @@ def main():
         y_bottom, y = y[:, :-1], y[:, 1:]
 
         y_top = model(x, y_bottom)
-        l = transformer.loss(
+        l = metrics.loss(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
-        a = transformer.accuracy(
+        a = metrics.accuracy(
             y_top=y_top, y=y, padding_idx=dataset.pad, reduce=False)
 
         assert l.size() == a.size()
@@ -208,8 +209,8 @@ def main():
           dataset.decode_target(inf.data[0]).split('</s>')[0])
 
       torch.save(base_model.state_dict(), args.weights)
+      print(warning('state saved to'), args.weights)
       model.train()
-      print(warning('model saved to'), args.weights)
 
 
 if __name__ == '__main__':

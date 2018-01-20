@@ -1,7 +1,6 @@
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
 import sublayers
 import numpy as np
 
@@ -60,7 +59,7 @@ class Encoder(nn.Module):
     for layer in self.encoder_layers:
       x = layer(x)
 
-    x /= (self.n_heads**2 * self.n_layers)
+    # x /= (self.n_heads**2 * self.n_layers)
 
     return x
 
@@ -93,7 +92,7 @@ class Decoder(nn.Module):
       y_bottom = layer(
           y_bottom, states, self_attention_mask=self_attention_mask)
 
-    y_bottom /= self.n_heads
+    # y_bottom /= self.n_heads
 
     return y_bottom
 
@@ -174,20 +173,3 @@ class PositionalEncoding(nn.Module):
       ], -1)
 
       return x
-
-
-def loss(y_top, y, padding_idx, reduce=True):
-  not_padding = y != padding_idx
-  loss = F.cross_entropy(y_top[not_padding], y[not_padding], reduce=reduce)
-  return loss
-
-
-def accuracy(y_top, y, padding_idx, reduce=True):
-  _, y_top = y_top.max(-1)
-  not_padding = y != padding_idx
-  eq = y_top[not_padding] == y[not_padding]
-
-  if reduce:
-    return eq.float().mean()
-  else:
-    return eq.float()
