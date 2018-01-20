@@ -133,8 +133,6 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-  train_gen = padded_batch(batch_size, dataset, 'train')
-  test_gen = padded_batch(batch_size, dataset, 'tst2012')
   i = 0
   while i < args.steps:
     print(success('step: {}'.format(i)))
@@ -143,7 +141,10 @@ def main():
     summary = metrics.Summary((0, 0))
     model.train()
 
-    for _, (x, y) in zip(range(args.log_interval), train_gen):
+    for _, (x, y) in zip(
+        range(args.log_interval),
+        padded_batch(batch_size, dataset, 'train'),
+    ):
       optimizer.zero_grad()
 
       x, y = Variable(x), Variable(y)
@@ -171,7 +172,10 @@ def main():
     summary = metrics.Summary((0, 0))
     model.eval()
 
-    for j, (x, y) in zip(itertools.count(), test_gen):
+    for j, (x, y) in zip(
+        itertools.count(),
+        padded_batch(batch_size, dataset, 'tst2012'),
+    ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       if args.cuda:
         x, y = x.cuda(), y.cuda()
