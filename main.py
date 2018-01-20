@@ -22,7 +22,7 @@ def padded_batch(batch_size, dataset, mode):
     max_y_len = 0
     total_size = 0
 
-    while len(xs) < batch_size and total_size < 4000:  # TODO: size per gpu
+    while len(xs) < batch_size and total_size < 4000:
       x, y = next(g)
 
       if len(x) > 200 or len(y) > 200:
@@ -148,7 +148,7 @@ def main():
     loss = transformer.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
     loss.backward()
     optimizer.step()
-    print(danger(i, end='\r'))
+    print(danger(i), end='\r')
 
     if i % args.log_interval == 0:
       model.eval()
