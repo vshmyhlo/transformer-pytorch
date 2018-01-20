@@ -204,7 +204,7 @@ def main():
 
       torch.save(model.state_dict(), args.weights)
       model.train()
-      print(warning('model saved to'), args.weight)
+      print(warning('model saved to'), args.weights)
 
 
 if __name__ == '__main__':
