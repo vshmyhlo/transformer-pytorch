@@ -13,6 +13,8 @@ import inference
 import metrics
 from utils import success, warning, danger
 
+len2batch_size = {}
+
 
 def sorted_gen(dataset, mode):
   for x, y in sorted(
@@ -23,7 +25,7 @@ def sorted_gen(dataset, mode):
     yield x, y
 
 
-def padded_batch(batch_size, dataset, mode):
+def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
   while True:
@@ -32,7 +34,7 @@ def padded_batch(batch_size, dataset, mode):
     max_x_len = 0
     max_y_len = 0
 
-    for _ in range(batch_size):
+    for _ in range(batch_size * n_devices):
       x, y = next(g)
 
       xs.append(x)
@@ -133,7 +135,8 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   i = 0
-  train_gen = padded_batch(args.batch_size, dataset, 'train')
+  train_gen = padded_batch(
+      args.batch_size, dataset, mode='train', n_devices=n_devices)
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
@@ -156,14 +159,17 @@ def main():
         accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
         loss.mean().backward()
         optimizer.step()
+
+        summary.add((loss.data, accuracy.data))
+        print(danger('train batch: {}'.format(i)), end='\r')
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          print(x.size(), y.size())
+          size = x.size(1) + y.size(1)
+          if size in len2len2batch_size:
+            len2batch_size[size] = x.size(0) / 2
+            print(len2batch_size)
         else:
           raise e
-
-      summary.add((loss.data, accuracy.data))
-      print(danger('train batch: {}'.format(i)), end='\r')
 
       i += 1
 
@@ -178,7 +184,8 @@ def main():
 
     for j, (x, y) in zip(
         itertools.count(),
-        padded_batch(args.batch_size, dataset, 'tst2012'),
+        padded_batch(
+            args.batch_size, dataset, mode='tst2012', n_devices=n_devices),
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       if args.cuda:
