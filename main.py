@@ -12,8 +12,9 @@ import transformer
 import inference
 import metrics
 from utils import success, warning, danger
+from collections import defaultdict
 
-len2batch_size = {}
+len2batch_size = defaultdict(lambda: 1)
 
 
 def sorted_gen(dataset, mode):
@@ -165,7 +166,7 @@ def main():
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           size = x.size(1) + y.size(1)
-          len2batch_size[size] = x.size(0) // 2
+          len2batch_size[size] *= 0.5
           print(len2batch_size)
         else:
           raise e
