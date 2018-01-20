@@ -10,7 +10,7 @@ def get_attn_subsequent_mask(seq):
   # TODO: check how this works
   ''' Get an attention mask to avoid using the subsequent info.'''
   assert seq.dim() == 2
-  attn_shape = (seq.size(0), seq.size(1), seq.size(1))
+  attn_shape = (1, seq.size(1), seq.size(1))
   subsequent_mask = np.tril(np.ones(attn_shape), k=0).astype('uint8')
   subsequent_mask = torch.from_numpy(subsequent_mask)
   if seq.is_cuda:
@@ -191,12 +191,3 @@ def accuracy(y_top, y, padding_idx, reduce=True):
     return eq.float().mean()
   else:
     return eq.float()
-
-
-def infer(model, x, y_bottom, max_len):
-  while y_bottom.size(1) < max_len:
-    y_top = model(x, y_bottom)
-    y_top = y_top.max(-1)[1]
-    y_bottom = torch.cat([y_bottom, y_top[:, -1:]], -1)
-
-  return y_top

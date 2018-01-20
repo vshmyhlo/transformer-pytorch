@@ -7,3 +7,7 @@ def success(str):
 
 def warning(str):
   return colored(str, 'yellow')
+
+
+def danger(str):
+  return colored(str, 'red')

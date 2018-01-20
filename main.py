@@ -8,7 +8,8 @@ from torch.autograd import Variable
 # import python_format_dataset as dataset
 import iwslt_dataset
 import transformer
-from utils import success, warning
+import inference
+from utils import success, warning, danger
 
 
 def padded_batch(batch_size, dataset, mode):
@@ -98,7 +99,7 @@ def main():
   # TODO: attention: in decoder self attention only attend to previous values
   # TODO: try attention padding mask
   # TODO: infer prediction should be the same as eval prediction
-  # TODO: eval loss, accuracy calculation refactor
+  # TODO: train and test: loss, accuracy calculation refactor
 
   parser = make_parser()
   args = parser.parse_args()
@@ -170,7 +171,7 @@ def main():
         accuracy += a.data.sum()
         n_samples += l.size(0)
 
-        print(warning('eval batch: {}'.format(j)), end='\r')
+        print(danger('eval batch: {}'.format(j)), end='\r')
       print('\r', end='')
 
       loss /= n_samples
@@ -193,7 +194,7 @@ def main():
       start = Variable(torch.LongTensor([[1]]) * dataset.sos)
       if args.cuda:
         start = start.cuda()
-      inf = transformer.infer(model, x[:1], y_bottom=start, max_len=100)
+      inf = inference.Inferer(model)(x[:1], y_bottom=start, max_len=100)
       print(
           warning('true:'),
           dataset.decode_target(y.data[0]).split('</s>')[0])
@@ -203,6 +204,7 @@ def main():
 
       torch.save(model.state_dict(), args.weights)
       model.train()
+      print(warning('model saved to'), args.weight)
 
 
 if __name__ == '__main__':

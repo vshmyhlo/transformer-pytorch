@@ -33,9 +33,7 @@ class Attention(nn.Module):
     k = self.kl(states)
     v = self.vl(states)
 
-    scores = self.attention(q, k)
-    if mask is not None:
-      scores = scores * mask.float()
+    scores = self.attention(q, k, mask)
     scores = scores.unsqueeze(-1)
     v = v.unsqueeze(-3)
     attended = v * scores
@@ -51,10 +49,12 @@ class LuongAttention(nn.Module):
     super().__init__()
     self.fc = nn.Linear(size, size, bias=False)
 
-  def forward(self, q, k):
+  def forward(self, q, k, mask):
     wk = self.fc(k)
     wk = wk.transpose(2, 1)
     scores = torch.bmm(q, wk)
+    if mask is not None:
+      scores.masked_fill_(mask == 0, float('-inf'))
     scores = F.softmax(scores, -1)
 
     return scores
