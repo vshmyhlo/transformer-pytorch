@@ -24,12 +24,11 @@ def padded_batch(batch_size, dataset, mode):
     max_y_len = 0
     total_size = 0
 
-    # while len(xs) < batch_size and total_size < 4000:
-    while len(xs) < batch_size:
+    while len(xs) < batch_size and total_size < 4000:
       x, y = next(g)
 
-      # if len(x) > 200 or len(y) > 200:
-      #   continue
+      if len(x) > 200 or len(y) > 200:
+        continue
 
       xs.append(x)
       ys.append(y)
