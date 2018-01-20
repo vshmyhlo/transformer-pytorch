@@ -135,7 +135,7 @@ def main():
 
   train_gen = padded_batch(batch_size, dataset, 'train')
   test_gen = padded_batch(batch_size, dataset, 'tst2012')
-  i = 1
+  i = 0
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
@@ -143,10 +143,9 @@ def main():
     summary = metrics.Summary((0, 0))
     model.train()
 
-    while i % args.log_interval != 0:
+    for _, (x, y) in zip(range(args.log_interval), train_gen):
       optimizer.zero_grad()
 
-      x, y = next(train_gen)
       x, y = Variable(x), Variable(y)
       if args.cuda:
         x, y = x.cuda(), y.cuda()
