@@ -117,11 +117,11 @@ def main():
       padding_idx=dataset.pad)
   model = base_model
 
-  device_count = 1
+  n_devices = 1
   if args.cuda:
-    if torch.cuda.device_count() > 1:
-      device_count = torch.cuda.device_count()
-      print(warning('using {} GPUs'.format(device_count)))
+    n_devices = torch.cuda.device_count()
+    if n_devices > 1:
+      print(warning('using {} GPUs'.format(n_devices)))
       model = nn.DataParallel(model)
 
     model = model.cuda()
@@ -158,7 +158,7 @@ def main():
         optimizer.step()
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          print(e)
+          print(x.size(), y.size())
         else:
           raise e
 
