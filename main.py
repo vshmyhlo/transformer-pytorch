@@ -90,7 +90,6 @@ def make_parser():
 def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
-  # TODO: inference
   # TODO: beam search
   # TODO: add test set
   # TODO: add multi-gpu
@@ -136,7 +135,7 @@ def main():
 
   train_gen = padded_batch(batch_size, dataset, 'train')
   test_gen = padded_batch(batch_size, dataset, 'tst2012')
-  i = 0
+  i = 1
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
