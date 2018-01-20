@@ -165,7 +165,7 @@ def main():
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           size = x.size(1) + y.size(1)
-          if size in len2len2batch_size:
+          if size in len2batch_size:
             len2batch_size[size] = x.size(0) / 2
             print(len2batch_size)
         else:
