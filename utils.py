@@ -18,6 +18,9 @@ class PersistentDict(object):
   def __contains__(self, key):
     return self.data.__contains__(key)
 
+  def __getitem__(self, key):
+    return self.data.__getitem__(key)
+
   def __setitem__(self, key, value):
     res = self.data.__setitem__(key, value)
 
