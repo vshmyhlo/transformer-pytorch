@@ -28,6 +28,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
   while True:
+    real_batch_size = batch_size
     x, y = next(g)
     max_x_len = len(x)
     max_y_len = len(y)
@@ -35,12 +36,12 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 
     expected_size = (max_x_len + 2, max_y_len + 2)
     if expected_size in len2batch_size:
-      batch_size = len2batch_size[expected_size]
+      real_batch_size = len2batch_size[expected_size]
       print(
           warning('truncated batch of size {} to {} samples'.format(
-              expected_size, batch_size)))
+              expected_size, real_batch_size)))
 
-    while len(xs) < (batch_size * n_devices):
+    while len(xs) < (real_batch_size * n_devices):
       x, y = next(g)
 
       max_x_len = max(max_x_len, len(x))
@@ -58,7 +59,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     y = torch.LongTensor(y)
 
     assert expected_size == (x.size(1), y.size(1))
-    len2batch_size[expected_size] = batch_size
+    len2batch_size[expected_size] = real_batch_size
 
     yield (x, y)
 
