@@ -12,7 +12,10 @@ import inference
 import metrics
 from utils import success, warning, danger
 
-len2batch_size = {}
+if os.path.exists('./len2batch_size'):
+  len2batch_size = pickle.load('./len2batch_size')
+else:
+  len2batch_size = {}
 
 
 def sorted_gen(dataset, mode):
@@ -154,9 +157,9 @@ def main():
     model.train()
 
     for _ in range(args.log_interval):
-      optimizer.zero_grad()
-
       try:
+        optimizer.zero_grad()
+
         x, y = next(train_gen)
         x, y = Variable(x), Variable(y)
         if args.cuda:
