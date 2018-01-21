@@ -173,7 +173,6 @@ def main():
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           len2batch_size[max(x.size(1), y.size(1) + 1)] //= 2
-          print(len2batch_size)
         else:
           raise e
 
