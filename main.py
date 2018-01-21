@@ -159,8 +159,8 @@ def main():
         x, y = Variable(x), Variable(y)
         x_size, y_size = x.size(), y.size()
         print(
-            danger('train batch {}: x {}, y {}'.format(i, tuple(x.size()),
-                                                       tuple(y.size()))),
+            danger('train batch {}: x {}, y {}'.format(i, tuple(
+                x.size()), tuple(y.size())) + ' ' * 10),
             end='\r')
         if args.cuda:
           x, y = x.cuda(), y.cuda()
@@ -196,8 +196,8 @@ def main():
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       print(
-          danger('eval batch {}: x {}, y {}'.format(j, tuple(x.size()),
-                                                    tuple(y.size()))),
+          danger('eval batch {}: x {}, y {}'.format(j, tuple(
+              x.size()), tuple(y.size())) + ' ' * 10),
           end='\r')
       if args.cuda:
         x, y = x.cuda(), y.cuda()
