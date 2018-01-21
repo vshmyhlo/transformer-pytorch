@@ -46,6 +46,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 
       max_x_len = max(max_x_len, len(x))
       max_y_len = max(max_y_len, len(y))
+      print(max_x_len + max_y_len, max_x_len, max_y_len)
 
       xs.append(x)
       ys.append(y)
