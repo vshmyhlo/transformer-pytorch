@@ -1,3 +1,4 @@
+import random
 import os
 import itertools
 import argparse
@@ -25,6 +26,11 @@ def sorted_gen(dataset, mode):
       reverse=True,
   ):
     yield x, y
+
+
+def shuffle(gen):
+  for x in random.shuffle(gen):
+    yield x
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
@@ -144,8 +150,9 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   i = 0
-  train_gen = padded_batch(
-      args.batch_size, dataset, mode='train', n_devices=n_devices)
+  train_gen = shuffle(
+      padded_batch(
+          args.batch_size, dataset, mode='train', n_devices=n_devices))
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
