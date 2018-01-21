@@ -13,6 +13,7 @@ import metrics
 from utils import success, warning, danger, PersistentDict
 
 len2batch_size = PersistentDict('./len2batch_size')
+print(len2batch_size.data)
 
 
 def sorted_gen(dataset, mode):
