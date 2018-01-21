@@ -6,15 +6,13 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-# import python_format_dataset as dataset
 import iwslt_dataset
 import transformer
 import inference
 import metrics
 from utils import success, warning, danger
-from collections import defaultdict
 
-len2batch_size = defaultdict(lambda: 1)
+len2batch_size = {}
 
 
 def sorted_gen(dataset, mode):
@@ -30,19 +28,26 @@ def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
   while True:
-    xs, ys = [], []
+    x, y = next(g)
+    max_x_len = len(x)
+    max_y_len = len(y)
+    xs, ys = [x], [y]
 
-    max_x_len = 0
-    max_y_len = 0
+    expected_size = (max_x_len + 2, max_y_len + 2)
+    if expected_size in len2batch_size:
+      batch_size = len2batch_size[expected_size]
+      print(
+          warning('truncated batch of size {} to {} samples'.format(
+              expected_size, batch_size)))
 
-    for _ in range(batch_size * n_devices):
+    while len(xs) < (batch_size * n_devices):
       x, y = next(g)
-
-      xs.append(x)
-      ys.append(y)
 
       max_x_len = max(max_x_len, len(x))
       max_y_len = max(max_y_len, len(y))
+
+      xs.append(x)
+      ys.append(y)
 
     x = [[dataset.sos] + x + [dataset.eos] + [dataset.pad] *
          (max_x_len - len(x)) for x in xs]
@@ -51,6 +56,9 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
+
+    assert expected_size == (x.size(1), y.size(1))
+    len2batch_size[expected_size] = batch_size
 
     yield (x, y)
 
@@ -126,7 +134,6 @@ def main():
     if n_devices > 1:
       print(warning('using {} GPUs'.format(n_devices)))
       model = nn.DataParallel(model)
-
     model = model.cuda()
 
   if os.path.exists(args.weights):
@@ -165,8 +172,7 @@ def main():
         print(danger('train batch: {}'.format(i)), end='\r')
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          size = x.size(1) + y.size(1)
-          len2batch_size[size] *= 0.5
+          len2batch_size[(x.size(1), y.size(1) + 1)] //= 2
           print(len2batch_size)
         else:
           raise e
