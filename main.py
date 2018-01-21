@@ -156,6 +156,7 @@ def main():
       try:
         x, y = next(train_gen)
         x, y = Variable(x), Variable(y)
+        x_size, y_size = x.size(), y.size()
         print(
             danger('train batch {}: x {}, y {}'.format(i, tuple(x.size()),
                                                        tuple(y.size()))),
@@ -173,7 +174,7 @@ def main():
         summary.add((loss.data, accuracy.data))
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          len2batch_size[max(x.size(1), y.size(1) + 1)] //= 2
+          len2batch_size[max(x_size[1], y_size[1])] //= 2
         else:
           raise e
 
