@@ -18,7 +18,7 @@ len2batch_size = {}
 def sorted_gen(dataset, mode):
   for x, y in sorted(
       dataset.gen(mode),
-      key=lambda xy: (len(xy[0]), len(xy[1])),
+      key=lambda xy: (len(xy[0]) * len(xy[1])),
       reverse=True,
   ):
     yield x, y
