@@ -151,9 +151,9 @@ def main():
     model.train()
 
     for _ in range(args.log_interval):
-      try:
-        optimizer.zero_grad()
+      optimizer.zero_grad()
 
+      try:
         x, y = next(train_gen)
         x, y = Variable(x), Variable(y)
         print(
