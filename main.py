@@ -10,12 +10,9 @@ import iwslt_dataset
 import transformer
 import inference
 import metrics
-from utils import success, warning, danger
+from utils import success, warning, danger, PersistentDict
 
-if os.path.exists('./len2batch_size'):
-  len2batch_size = pickle.load('./len2batch_size')
-else:
-  len2batch_size = {}
+len2batch_size = PersistentDict('./len2batch_size')
 
 
 def sorted_gen(dataset, mode):
@@ -40,9 +37,6 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     expected_size = max(max_x_len, max_y_len) + 2
     if expected_size in len2batch_size:
       real_batch_size = len2batch_size[expected_size]
-      print(
-          warning('truncated batch of size {} to {} samples'.format(
-              expected_size, real_batch_size)))
 
     while len(xs) < (real_batch_size * n_devices):
       x, y = next(g)
@@ -162,6 +156,9 @@ def main():
 
         x, y = next(train_gen)
         x, y = Variable(x), Variable(y)
+        print(
+            danger('train batch {}: x {}, y {}'.format(i, x.size(), y.size())),
+            end='\r')
         if args.cuda:
           x, y = x.cuda(), y.cuda()
         y_bottom, y = y[:, :-1], y[:, 1:]
@@ -173,7 +170,6 @@ def main():
         optimizer.step()
 
         summary.add((loss.data, accuracy.data))
-        print(danger('train batch: {}'.format(i)), end='\r')
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           len2batch_size[max(x.size(1), y.size(1) + 1)] //= 2
@@ -194,10 +190,12 @@ def main():
 
     for j, (x, y) in zip(
         itertools.count(),
-        padded_batch(
-            args.batch_size, dataset, mode='tst2012', n_devices=n_devices),
+        padded_batch(32, dataset, mode='tst2012', n_devices=n_devices),
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+      print(
+          danger('eval batch {}: x {}, y {}'.format(j, x.size(), y.size())),
+          end='\r')
       if args.cuda:
         x, y = x.cuda(), y.cuda()
       y_bottom, y = y[:, :-1], y[:, 1:]
@@ -207,7 +205,6 @@ def main():
       accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
 
       summary.add((loss.data, accuracy.data))
-      print(danger('eval batch: {}'.format(j)), end='\r')
 
     loss, accuracy = summary.calculate()
     print(
