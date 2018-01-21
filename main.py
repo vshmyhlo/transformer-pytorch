@@ -18,7 +18,7 @@ len2batch_size = {}
 def sorted_gen(dataset, mode):
   for x, y in sorted(
       dataset.gen(mode),
-      key=lambda xy: len(xy[0]) + len(xy[1]),
+      key=lambda xy: max(len(xy[0]), len(xy[1])),
       reverse=True,
   ):
     yield x, y
@@ -34,7 +34,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     max_y_len = len(y)
     xs, ys = [x], [y]
 
-    expected_size = max_x_len + 2 + max_y_len + 2
+    expected_size = max(max_x_len, max_y_len) + 2
     if expected_size in len2batch_size:
       real_batch_size = len2batch_size[expected_size]
       print(
@@ -46,7 +46,6 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 
       max_x_len = max(max_x_len, len(x))
       max_y_len = max(max_y_len, len(y))
-      print(len(x) + len(y), len(x), len(y))
 
       xs.append(x)
       ys.append(y)
@@ -59,8 +58,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
 
-    print(expected_size, x.size(1) + y.size(1))
-    assert expected_size == x.size(1) + y.size(1)
+    assert expected_size == max(x.size(1), y.size(1))
     len2batch_size[expected_size] = real_batch_size
 
     yield (x, y)
@@ -175,7 +173,7 @@ def main():
         print(danger('train batch: {}'.format(i)), end='\r')
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          len2batch_size[x.size(1) + y.size(1) + 1] //= 2
+          len2batch_size[max(x.size(1), y.size(1) + 1)] //= 2
           print(len2batch_size)
         else:
           raise e
