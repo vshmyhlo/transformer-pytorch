@@ -29,7 +29,9 @@ def sorted_gen(dataset, mode):
 
 
 def shuffle(gen):
-  for x in random.shuffle(list(gen)):
+  seq = list(gen)
+  random.shuffle(seq)
+  for x in seq:
     yield x
 
 
