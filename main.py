@@ -157,7 +157,8 @@ def main():
         x, y = next(train_gen)
         x, y = Variable(x), Variable(y)
         print(
-            danger('train batch {}: x {}, y {}'.format(i, x.size(), y.size())),
+            danger('train batch {}: x {}, y {}'.format(i, tuple(x.size()),
+                                                       tuple(y.size()))),
             end='\r')
         if args.cuda:
           x, y = x.cuda(), y.cuda()
@@ -193,7 +194,8 @@ def main():
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       print(
-          danger('eval batch {}: x {}, y {}'.format(j, x.size(), y.size())),
+          danger('eval batch {}: x {}, y {}'.format(j, tuple(x.size()),
+                                                    tuple(y.size()))),
           end='\r')
       if args.cuda:
         x, y = x.cuda(), y.cuda()

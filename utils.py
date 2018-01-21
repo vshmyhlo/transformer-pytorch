@@ -13,7 +13,7 @@ class PersistentDict(object):
     else:
       self.data = {}
 
-    print('len(self.data)', len(self.data))
+    print('PersistentDict: len(self.data)', len(self.data))
 
   def __contains__(self, key):
     return self.data.__contains__(key)
