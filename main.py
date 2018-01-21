@@ -59,6 +59,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
 
+    print(expected_size, x.size(1) + y.size(1))
     assert expected_size == x.size(1) + y.size(1)
     len2batch_size[expected_size] = real_batch_size
 
