@@ -118,8 +118,8 @@ def test_step(x, y, model, summary, padding_idx):
   y_bottom, y = y[:, :-1], y[:, 1:]
 
   y_top = model(x, y_bottom)
-  loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+  loss = metrics.loss(y_top=y_top, y=y, padding_idx=padding_idx)
+  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=padding_idx)
 
   summary.add((loss.data, accuracy.data))
 
