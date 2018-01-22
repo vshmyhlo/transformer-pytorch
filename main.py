@@ -151,24 +151,37 @@ def main():
 
     # Train ####################################################################
     model.train()
-    train_phase(model, dataset=dataset)
+    train_phase(
+        model,
+        dataset=dataset,
+        cuda=args.cuda,
+        batch_size=args.batch_size,
+        batch2batch_size=2batch2batch_size,
+        optimizer=optimizer,
+    )
 
     # Eval #####################################################################
     model.eval()
-    eval_phase(model, dataset=dataset)
+    eval_phase(
+        model,
+        dataset=dataset,
+        cuda=args.cuda,
+        batch_size=32,
+        batch2batch_size={},
+    )
 
     # Saving ###################################################################
     torch.save(base_model.state_dict(), args.weights)
     print(warning('state saved to'), args.weights)
 
 
-def train_phase(model, dataset):
+def train_phase(model, dataset, optimizer, batch_size, cuda, batch2batch_size):
   summary = metrics.Summary((0, 0))
 
   for i, (batch_i, (x, y)) in zip(
       itertools.count(),
       padded_batch(
-          args.batch_size,
+          batch_size,
           dataset,
           mode='train',
           n_devices=n_devices,
@@ -182,7 +195,7 @@ def train_phase(model, dataset):
         end='\r')
 
     x, y = Variable(x), Variable(y)
-    if args.cuda:
+    if cuda:
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
 
@@ -208,17 +221,17 @@ def train_phase(model, dataset):
           loss, accuracy * 100)))
 
 
-def eval_phase(model, dataset):
+def eval_phase(model, dataset, cuda, batch_size, batch2batch_size):
   summary = metrics.Summary((0, 0))
 
   for j, (_, (x, y)) in zip(
       itertools.count(),
       padded_batch(
-          32,
+          batch_size,
           dataset,
           mode='tst2012',
           n_devices=n_devices,
-          batch2batch_size={}),
+          batch2batch_size=batch2batch_size),
   ):
     print(
         danger('eval batch {}: x {}, y {}'.format(j, tuple(x.size()),
@@ -226,7 +239,7 @@ def eval_phase(model, dataset):
         end='\r')
 
     x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-    if args.cuda:
+    if cuda:
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
 
@@ -250,7 +263,7 @@ def eval_phase(model, dataset):
   print(success('inference:'))
   inferer = inference.Inferer(model)
   start = Variable(torch.LongTensor(1, 1).fill_(dataset.sos))
-  if args.cuda:
+  if cuda:
     start = start.cuda()
   for true, pred in zip(y.data,
                         inferer(x[:1], y_bottom=start, max_len=100).data):
