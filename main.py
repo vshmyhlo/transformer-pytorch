@@ -205,6 +205,7 @@ def main():
 
     # Eval #####################################################################
     summary = metrics.Summary((0, 0))
+    optimizer.zero_grad()
     model.eval()
 
     for j, (_, (x, y)) in zip(
