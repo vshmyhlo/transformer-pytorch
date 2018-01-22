@@ -236,8 +236,7 @@ def main():
               x.size()), tuple(y.size())) + ' ' * 10),
           end='\r')
 
-      test_step(
-          x, y, model=model, summary=summary, padding_idx=dataset.padding_idx)
+      test_step(x, y, model=model, summary=summary, padding_idx=dataset.pad)
 
     loss, accuracy = summary.calculate()
     print(
