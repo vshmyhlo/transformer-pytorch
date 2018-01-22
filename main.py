@@ -98,32 +98,6 @@ def make_parser():
   return parser
 
 
-def train_step(x, y, model, optimizer, summary, padding_idx):
-  optimizer.zero_grad()
-
-  x, y = Variable(x), Variable(y)
-  y_bottom, y = y[:, :-1], y[:, 1:]
-
-  y_top = model(x, y_bottom)
-  loss = metrics.loss(y_top=y_top, y=y, padding_idx=padding_idx)
-  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=padding_idx)
-  loss.mean().backward()
-  optimizer.step()
-
-  summary.add((loss.data, accuracy.data))
-
-
-def test_step(x, y, model, summary, padding_idx):
-  x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-  y_bottom, y = y[:, :-1], y[:, 1:]
-
-  y_top = model(x, y_bottom)
-  loss = metrics.loss(y_top=y_top, y=y, padding_idx=padding_idx)
-  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=padding_idx)
-
-  summary.add((loss.data, accuracy.data))
-
-
 def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
@@ -188,22 +162,30 @@ def main():
             n_devices=n_devices,
             batch2batch_size=batch2batch_size),
     ):
-      if args.cuda:
-        x, y = x.cuda(), y.cuda()
-
-      print(
-          danger('train batch {}: x {}, y {}'.format(i, tuple(
-              x.size()), tuple(y.size())) + ' ' * 10),
-          end='\r')
+      try:
+        optimizer.zero_grad()
+      except RuntimeError:
+        print(danger('optimizer.zero_grad() failed'))
+        optimizer.zero_grad()
 
       try:
-        train_step(
-            x,
-            y,
-            model=model,
-            optimizer=optimizer,
-            summary=summary,
-            padding_idx=dataset.pad)
+        x, y = Variable(x), Variable(y)
+        print(
+            danger('train batch {}: x {}, y {}'.format(i, tuple(
+                x.size()), tuple(y.size())) + ' ' * 10),
+            end='\r')
+        if args.cuda:
+          x, y = x.cuda(), y.cuda()
+        y_bottom, y = y[:, :-1], y[:, 1:]
+
+        y_top = model(x, y_bottom)
+        loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+        accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+        loss.mean().backward()
+        optimizer.step()
+
+        summary.add((loss.data, accuracy.data))
+
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
@@ -228,42 +210,40 @@ def main():
             n_devices=n_devices,
             batch2batch_size={}),
     ):
-      if args.cuda:
-        x, y = x.cuda(), y.cuda()
-
+      x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       print(
           danger('eval batch {}: x {}, y {}'.format(j, tuple(
               x.size()), tuple(y.size())) + ' ' * 10),
           end='\r')
+      if args.cuda:
+        x, y = x.cuda(), y.cuda()
+      y_bottom, y = y[:, :-1], y[:, 1:]
 
-      test_step(x, y, model=model, summary=summary, padding_idx=dataset.pad)
+      y_top = model(x, y_bottom)
+      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+
+      summary.add((loss.data, accuracy.data))
 
     loss, accuracy = summary.calculate()
     print(
         success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
             loss, accuracy * 100)))
 
+    for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
+      print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
+      print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
+
     # Infer ####################################################################
-    x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-
-    for k in range(3):
-      print(
-          warning('true:'),
-          dataset.decode_target(y.data[k]).split('</s>')[0])
-      print(
-          warning('pred:'),
-          dataset.decode_target(torch.max(y_top,
-                                          dim=-1)[1].data[k]).split('</s>')[0])
-
     print(success('inference:'))
-    start = Variable(torch.LongTensor([[1]]) * dataset.sos)
+    inferer = inference.Inferer(model)
+    start = Variable(torch.LongTensor(1, 1).fill_(dataset.sos))
     if args.cuda:
       start = start.cuda()
-    inf = inference.Inferer(model)(x[:1], y_bottom=start, max_len=100)
-    print(warning('true:'), dataset.decode_target(y.data[0]).split('</s>')[0])
-    print(
-        warning('pred:'),
-        dataset.decode_target(inf.data[0]).split('</s>')[0])
+    for true, pred in zip(y.data,
+                          inferer(x[:1], y_bottom=start, max_len=100).data):
+      print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
+      print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
 
     # Saving ###################################################################
     torch.save(base_model.state_dict(), args.weights)
