@@ -15,8 +15,7 @@ from utils import success, warning, danger, PersistentDict
 
 batch2batch_size = PersistentDict('./batch2batch_size')
 
-for key in sorted(batch2batch_size.data.keys()):
-  print('{}: {}'.format(key, batch2batch_size.data[key]))
+print(sorted(batch2batch_size.data.values()))
 
 
 def sorted_gen(dataset, mode):
