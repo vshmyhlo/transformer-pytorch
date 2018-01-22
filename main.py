@@ -185,6 +185,7 @@ def main():
         summary.add((loss.data, accuracy))
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
+          print(danger('out of memory' + ' ' * 50))
           batch2batch_size[batch_i] //= 2
         else:
           raise e
