@@ -158,9 +158,8 @@ def main():
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
   i = 0
-  train_gen = shuffle(
-      padded_batch(
-          args.batch_size, dataset, mode='train', n_devices=n_devices))
+  train_gen = padded_batch(
+      args.batch_size, dataset, mode='train', n_devices=n_devices)
   while i < args.steps:
     print(success('step: {}'.format(i)))
 
