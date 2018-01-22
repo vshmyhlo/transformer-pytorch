@@ -156,7 +156,7 @@ def main():
         dataset=dataset,
         cuda=args.cuda,
         batch_size=args.batch_size,
-        batch2batch_size=2batch2batch_size,
+        batch2batch_size=batch2batch_size,
         optimizer=optimizer,
     )
 
