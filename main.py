@@ -244,6 +244,8 @@ def main():
             loss, accuracy * 100)))
 
     # Infer ####################################################################
+    x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+
     for k in range(3):
       print(
           warning('true:'),
