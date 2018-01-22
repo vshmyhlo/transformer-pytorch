@@ -165,11 +165,12 @@ def main():
       optimizer.zero_grad()
 
       try:
-        x, y = Variable(x), Variable(y)
         print(
             danger('train batch {}: x {}, y {}'.format(i, tuple(
                 x.size()), tuple(y.size())) + ' ' * 10),
             end='\r')
+
+        x, y = Variable(x), Variable(y)
         if args.cuda:
           x, y = x.cuda(), y.cuda()
         y_bottom, y = y[:, :-1], y[:, 1:]
@@ -206,11 +207,12 @@ def main():
             n_devices=n_devices,
             batch2batch_size={}),
     ):
-      x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       print(
           danger('eval batch {}: x {}, y {}'.format(j, tuple(
               x.size()), tuple(y.size())) + ' ' * 10),
           end='\r')
+
+      x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       if args.cuda:
         x, y = x.cuda(), y.cuda()
       y_bottom, y = y[:, :-1], y[:, 1:]
