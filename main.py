@@ -117,8 +117,6 @@ def main():
   # TODO: requirements.txt file
   # TODO: attention: in decoder self attention only attend to previous values
   # TODO: try attention padding mask
-  # TODO: infer prediction should be the same as eval prediction
-  # TODO: train and test: loss, accuracy calculation refactor
 
   parser = make_parser()
   args = parser.parse_args()
@@ -161,7 +159,10 @@ def main():
     model.train()
 
     for _ in range(args.log_interval):
-      optimizer.zero_grad()
+      try:
+        optimizer.zero_grad()
+      except RuntimeError:
+        optimizer.zero_grad()
 
       try:
         batch_i, (x, y) = next(train_gen)
@@ -196,7 +197,6 @@ def main():
 
     # Eval #####################################################################
     summary = metrics.Summary((0, 0))
-    optimizer.zero_grad()
     model.eval()
 
     for j, (_, (x, y)) in zip(
