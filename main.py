@@ -180,6 +180,7 @@ def main():
         accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
         loss.mean().backward()
         optimizer.step()
+        optimizer.zero_grad()
 
         summary.add((loss.data, accuracy.data))
       except RuntimeError as e:
