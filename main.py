@@ -79,6 +79,8 @@ def make_parser():
   parser.add_argument("--size", help="transformer size", type=int, default=256)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
+      "--epochs", help="number of epochs", type=int, default=10)
+  parser.add_argument(
       "--dataset-path", help="dataset folder", type=str, default='./iwslt15')
   parser.add_argument(
       "--source-lng", help="source language", type=str, default='en')
@@ -88,10 +90,10 @@ def make_parser():
       "--n-layers", help="number of transformer layers", type=int, default=4)
   parser.add_argument(
       "--n-heads", help="number of transformer heads", type=int, default=4)
-  parser.add_argument(
-      "--steps", help="number of steps", type=int, default=1000)
-  parser.add_argument(
-      "--log-interval", help="log interval", type=int, default=100)
+  # parser.add_argument(
+  #     "--steps", help="number of steps", type=int, default=1000)
+  # parser.add_argument(
+  #     "--log-interval", help="log interval", type=int, default=100)
   parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
