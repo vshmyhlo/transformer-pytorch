@@ -102,8 +102,6 @@ def train_step(x, y, optimizer, summary):
   optimizer.zero_grad()
 
   x, y = Variable(x), Variable(y)
-  if args.cuda:
-    x, y = x.cuda(), y.cuda()
   y_bottom, y = y[:, :-1], y[:, 1:]
 
   y_top = model(x, y_bottom)
@@ -179,6 +177,9 @@ def main():
             n_devices=n_devices,
             batch2batch_size=batch2batch_size),
     ):
+      if args.cuda:
+        x, y = x.cuda(), y.cuda()
+
       print(
           danger('train batch {}: x {}, y {}'.format(i, tuple(
               x.size()), tuple(y.size())) + ' ' * 10),
