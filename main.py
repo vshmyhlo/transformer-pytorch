@@ -164,17 +164,17 @@ def main():
     ):
       optimizer.zero_grad()
 
+      print(
+          danger('train batch {}: x {}, y {}'.format(i, tuple(
+              x.size()), tuple(y.size())) + ' ' * 10),
+          end='\r')
+
+      x, y = Variable(x), Variable(y)
+      if args.cuda:
+        x, y = x.cuda(), y.cuda()
+      y_bottom, y = y[:, :-1], y[:, 1:]
+
       try:
-        print(
-            danger('train batch {}: x {}, y {}'.format(i, tuple(
-                x.size()), tuple(y.size())) + ' ' * 10),
-            end='\r')
-
-        x, y = Variable(x), Variable(y)
-        if args.cuda:
-          x, y = x.cuda(), y.cuda()
-        y_bottom, y = y[:, :-1], y[:, 1:]
-
         y_top = model(x, y_bottom)
         loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
         accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
@@ -182,7 +182,6 @@ def main():
         optimizer.step()
 
         summary.add((loss.data, accuracy.data))
-
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
