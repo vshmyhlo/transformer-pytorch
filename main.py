@@ -11,7 +11,7 @@ import iwslt_dataset
 import transformer
 import inference
 import metrics
-from utils import success, warning, danger, PersistentDict
+from utils import success, warning, danger, log_args, PersistentDict
 
 batch2batch_size = PersistentDict('./batch2batch_size')
 print(
@@ -108,16 +108,17 @@ def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: beam search
-  # TODO: add test set
   # TODO: try mask attention
   # TODO: try attention padding mask
-  # TODO: split batch on gpus
   # TODO: async
   # TODO: requirements.txt file
   # TODO: attention: in decoder self attention only attend to previous values
+  # TODO: byte pair encoding
+  # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
 
   parser = make_parser()
   args = parser.parse_args()
+  log_args(args)
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
@@ -187,8 +188,6 @@ def main():
           batch2batch_size[batch_i] //= 2
         else:
           raise e
-
-      del x, y
 
     loss, accuracy = summary.calculate()
     print(

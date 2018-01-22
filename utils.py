@@ -38,3 +38,9 @@ def warning(str):
 
 def danger(str):
   return colored(str, 'red')
+
+
+def log_args(args):
+  print(warning('Arguments:'))
+  for key, value in vars(args).items():
+    print(warning('\t{}:').format(key), value)
