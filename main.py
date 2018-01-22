@@ -113,6 +113,17 @@ def train_step(x, y, model, optimizer, summary, padding_idx):
   summary.add((loss.data, accuracy.data))
 
 
+def test_step(x, y, model, summary, padding_idx):
+  x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+  y_bottom, y = y[:, :-1], y[:, 1:]
+
+  y_top = model(x, y_bottom)
+  loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+
+  summary.add((loss.data, accuracy.data))
+
+
 def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
@@ -217,20 +228,16 @@ def main():
             n_devices=n_devices,
             batch2batch_size={}),
     ):
-      x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+      if args.cuda:
+        x, y = x.cuda(), y.cuda()
+
       print(
           danger('eval batch {}: x {}, y {}'.format(j, tuple(
               x.size()), tuple(y.size())) + ' ' * 10),
           end='\r')
-      if args.cuda:
-        x, y = x.cuda(), y.cuda()
-      y_bottom, y = y[:, :-1], y[:, 1:]
 
-      y_top = model(x, y_bottom)
-      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
-
-      summary.add((loss.data, accuracy.data))
+      test_step(
+          x, y, model=model, summary=summary, padding_idx=dataset.padding_idx)
 
     loss, accuracy = summary.calculate()
     print(
