@@ -13,12 +13,6 @@ import inference
 import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
-batch2batch_size = PersistentDict('./batch2batch_size')
-print(
-    warning('PersistentDict: len(data) == {}'.format(
-        len(batch2batch_size.data))))
-print(sorted(batch2batch_size.data.values()))
-
 
 def sorted_gen(dataset, mode):
   for x, y in sorted(
@@ -36,7 +30,7 @@ def shuffle(gen):
     yield x
 
 
-def padded_batch(batch_size, dataset, mode, n_devices):
+def padded_batch(batch_size, dataset, mode, n_devices, batch2batch_size):
   g = sorted_gen(dataset, mode)
 
   for batch_i in itertools.count():
@@ -119,6 +113,11 @@ def main():
   parser = make_parser()
   args = parser.parse_args()
   log_args(args)
+  batch2batch_size = PersistentDict('./batch2batch_size')
+  print(
+      warning('PersistentDict: len(data) == {}'.format(
+          len(batch2batch_size.data))))
+  print(sorted(batch2batch_size.data.values()))
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
@@ -157,7 +156,11 @@ def main():
     for i, (batch_i, (x, y)) in zip(
         itertools.count(),
         padded_batch(
-            args.batch_size, dataset, mode='train', n_devices=n_devices),
+            args.batch_size,
+            dataset,
+            mode='train',
+            n_devices=n_devices,
+            batch2batch_size=batch2batch_size),
     ):
       try:
         optimizer.zero_grad()
@@ -200,7 +203,12 @@ def main():
 
     for j, (_, (x, y)) in zip(
         itertools.count(),
-        padded_batch(32, dataset, mode='tst2012', n_devices=n_devices),
+        padded_batch(
+            32,
+            dataset,
+            mode='tst2012',
+            n_devices=n_devices,
+            batch2batch_size={}),
     ):
       x, y = Variable(x, volatile=True), Variable(y, volatile=True)
       print(
