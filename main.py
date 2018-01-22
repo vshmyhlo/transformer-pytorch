@@ -177,11 +177,12 @@ def main():
       try:
         y_top = model(x, y_bottom)
         loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-        accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+        accuracy = metrics.accuracy(
+            y_top=y_top.data, y=y.data, padding_idx=dataset.pad)
         loss.mean().backward()
         optimizer.step()
 
-        summary.add((loss.data, accuracy.data))
+        summary.add((loss.data, accuracy))
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
@@ -218,9 +219,10 @@ def main():
 
       y_top = model(x, y_bottom)
       loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-      accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+      accuracy = metrics.accuracy(
+          y_top=y_top.data, y=y.data, padding_idx=dataset.pad)
 
-      summary.add((loss.data, accuracy.data))
+      summary.add((loss.data, accuracy))
 
     loss, accuracy = summary.calculate()
     print(
