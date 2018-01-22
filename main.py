@@ -187,8 +187,8 @@ def main():
           batch2batch_size[batch_i] //= 2
         else:
           raise e
-      finally:
-        del x, y
+
+      del x, y
 
     loss, accuracy = summary.calculate()
     print(
