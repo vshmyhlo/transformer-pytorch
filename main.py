@@ -90,10 +90,6 @@ def make_parser():
       "--n-layers", help="number of transformer layers", type=int, default=4)
   parser.add_argument(
       "--n-heads", help="number of transformer heads", type=int, default=4)
-  # parser.add_argument(
-  #     "--steps", help="number of steps", type=int, default=1000)
-  # parser.add_argument(
-  #     "--log-interval", help="log interval", type=int, default=100)
   parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
@@ -150,19 +146,13 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-  # i = 0
-  # train_gen = padded_batch(
-  #     args.batch_size, dataset, mode='train', n_devices=n_devices)
-  # while i < args.steps:
   for epoch in range(args.epochs):
-    # print(success('step: {}'.format(i)))
     print(success('epoch: {}'.format(epoch)))
 
     # Train ####################################################################
     summary = metrics.Summary((0, 0))
     model.train()
 
-    # for _ in range(args.log_interval):
     for i, (batch_i, (x, y)) in zip(
         itertools.count(),
         padded_batch(
@@ -175,7 +165,6 @@ def main():
         optimizer.zero_grad()
 
       try:
-        # batch_i, (x, y) = next(train_gen)
         x, y = Variable(x), Variable(y)
         print(
             danger('train batch {}: x {}, y {}'.format(i, tuple(
@@ -192,13 +181,13 @@ def main():
         optimizer.step()
 
         summary.add((loss.data, accuracy.data))
+
+        del x, y
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
         else:
           raise e
-
-      # i += 1
 
     loss, accuracy = summary.calculate()
     print(
