@@ -162,11 +162,7 @@ def main():
             n_devices=n_devices,
             batch2batch_size=batch2batch_size),
     ):
-      try:
-        optimizer.zero_grad()
-      except RuntimeError:
-        print(danger('optimizer.zero_grad() failed'))
-        optimizer.zero_grad()
+      optimizer.zero_grad()
 
       try:
         x, y = Variable(x), Variable(y)
