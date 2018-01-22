@@ -13,10 +13,10 @@ import inference
 import metrics
 from utils import success, warning, danger, PersistentDict
 
-len2batch_size = PersistentDict('./len2batch_size')
+batch2batch_size = PersistentDict('./batch2batch_size')
 
-for key in sorted(len2batch_size.data.keys()):
-  print('{}: {}'.format(key, len2batch_size.data[key]))
+for key in sorted(batch2batch_size.data.keys()):
+  print('{}: {}'.format(key, batch2batch_size.data[key]))
 
 
 def sorted_gen(dataset, mode):
@@ -38,16 +38,20 @@ def shuffle(gen):
 def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
-  while True:
-    real_batch_size = batch_size
+  for batch_i in itertools.count():
     x, y = next(g)
     max_x_len = len(x)
     max_y_len = len(y)
     xs, ys = [x], [y]
 
-    expected_size = max(max_x_len, max_y_len) + 2
-    if expected_size in len2batch_size:
-      real_batch_size = len2batch_size[expected_size]
+    # expected_size = max(max_x_len, max_y_len) + 2
+    # if expected_size in batch2batch_size:
+    #   real_batch_size = batch2batch_size[expected_size]
+
+    if batch_i in batch2batch_size:
+      real_batch_size = batch2batch_size[batch_i]
+    else:
+      real_batch_size = batch_size
 
     while len(xs) < (real_batch_size * n_devices):
       x, y = next(g)
@@ -66,10 +70,12 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
 
-    assert expected_size == max(x.size(1), y.size(1))
-    len2batch_size[expected_size] = real_batch_size
+    # assert expected_size == max(x.size(1), y.size(1))
+    # batch2batch_size[expected_size] = real_batch_size
 
-    yield (x, y)
+    batch2batch_size[batch_i] = real_batch_size
+
+    yield batch_i, (x, y)
 
 
 def make_parser():
@@ -166,9 +172,9 @@ def main():
       optimizer.zero_grad()
 
       try:
-        x, y = next(train_gen)
+        batch_i, (x, y) = next(train_gen)
         x, y = Variable(x), Variable(y)
-        x_size, y_size = x.size(), y.size()
+        # x_size, y_size = x.size(), y.size()
         print(
             danger('train batch {}: x {}, y {}'.format(i, tuple(
                 x.size()), tuple(y.size())) + ' ' * 10),
@@ -186,7 +192,8 @@ def main():
         summary.add((loss.data, accuracy.data))
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-          len2batch_size[max(x_size[1], y_size[1])] //= 2
+          # batch2batch_size[max(x_size[1], y_size[1])] //= 2
+          batch2batch_size[batch_i] //= 2
         else:
           raise e
 
@@ -201,7 +208,7 @@ def main():
     summary = metrics.Summary((0, 0))
     model.eval()
 
-    for j, (x, y) in zip(
+    for j, (_, (x, y)) in zip(
         itertools.count(),
         padded_batch(32, dataset, mode='tst2012', n_devices=n_devices),
     ):
