@@ -98,7 +98,7 @@ def make_parser():
   return parser
 
 
-def train_step(x, y, optimizer, summary):
+def train_step(x, y, model, optimizer, summary):
   optimizer.zero_grad()
 
   x, y = Variable(x), Variable(y)
@@ -186,7 +186,7 @@ def main():
           end='\r')
 
       try:
-        train_step(x, y, optimizer=optimizer, summary=summary)
+        train_step(x, y, model=model, optimizer=optimizer, summary=summary)
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
