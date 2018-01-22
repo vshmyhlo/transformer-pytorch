@@ -98,6 +98,23 @@ def make_parser():
   return parser
 
 
+def train_step(x, y, optimizer, summary):
+  optimizer.zero_grad()
+
+  x, y = Variable(x), Variable(y)
+  if args.cuda:
+    x, y = x.cuda(), y.cuda()
+  y_bottom, y = y[:, :-1], y[:, 1:]
+
+  y_top = model(x, y_bottom)
+  loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+  loss.mean().backward()
+  optimizer.step()
+
+  summary.add((loss.data, accuracy.data))
+
+
 def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
@@ -162,30 +179,13 @@ def main():
             n_devices=n_devices,
             batch2batch_size=batch2batch_size),
     ):
-      try:
-        optimizer.zero_grad()
-      except RuntimeError:
-        print(danger('optimizer.zero_grad() failed'))
-        optimizer.zero_grad()
+      print(
+          danger('train batch {}: x {}, y {}'.format(i, tuple(
+              x.size()), tuple(y.size())) + ' ' * 10),
+          end='\r')
 
       try:
-        x, y = Variable(x), Variable(y)
-        print(
-            danger('train batch {}: x {}, y {}'.format(i, tuple(
-                x.size()), tuple(y.size())) + ' ' * 10),
-            end='\r')
-        if args.cuda:
-          x, y = x.cuda(), y.cuda()
-        y_bottom, y = y[:, :-1], y[:, 1:]
-
-        y_top = model(x, y_bottom)
-        loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-        accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
-        loss.mean().backward()
-        optimizer.step()
-
-        summary.add((loss.data, accuracy.data))
-
+        train_step(x, y, optimizer=optimizer, summary=summary)
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
