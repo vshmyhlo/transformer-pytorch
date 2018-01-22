@@ -14,7 +14,9 @@ import metrics
 from utils import success, warning, danger, PersistentDict
 
 batch2batch_size = PersistentDict('./batch2batch_size')
-
+print(
+    warning('PersistentDict: len(data) == {}'.format(
+        len(batch2batch_size.data))))
 print(sorted(batch2batch_size.data.values()))
 
 
@@ -109,13 +111,12 @@ def main():
   # TODO: visualize attention
   # TODO: beam search
   # TODO: add test set
-  # TODO: add multi-gpu
   # TODO: try mask attention
+  # TODO: try attention padding mask
   # TODO: split batch on gpus
   # TODO: async
   # TODO: requirements.txt file
   # TODO: attention: in decoder self attention only attend to previous values
-  # TODO: try attention padding mask
 
   parser = make_parser()
   args = parser.parse_args()
@@ -147,24 +148,32 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-  i = 0
-  train_gen = padded_batch(
-      args.batch_size, dataset, mode='train', n_devices=n_devices)
-  while i < args.steps:
-    print(success('step: {}'.format(i)))
+  # i = 0
+  # train_gen = padded_batch(
+  #     args.batch_size, dataset, mode='train', n_devices=n_devices)
+  # while i < args.steps:
+  for epoch in range(args.epochs):
+    # print(success('step: {}'.format(i)))
+    print(success('epoch: {}'.format(epoch)))
 
     # Train ####################################################################
     summary = metrics.Summary((0, 0))
     model.train()
 
-    for _ in range(args.log_interval):
+    # for _ in range(args.log_interval):
+    for i, (batch_i, (x, y)) in zip(
+        itertools.count(),
+        padded_batch(
+            args.batch_size, dataset, mode='train', n_devices=n_devices),
+    ):
       try:
         optimizer.zero_grad()
       except RuntimeError:
+        print(danger('optimizer.zero_grad() failed'))
         optimizer.zero_grad()
 
       try:
-        batch_i, (x, y) = next(train_gen)
+        # batch_i, (x, y) = next(train_gen)
         x, y = Variable(x), Variable(y)
         print(
             danger('train batch {}: x {}, y {}'.format(i, tuple(
@@ -187,7 +196,7 @@ def main():
         else:
           raise e
 
-      i += 1
+      # i += 1
 
     loss, accuracy = summary.calculate()
     print(
