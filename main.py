@@ -98,15 +98,15 @@ def make_parser():
   return parser
 
 
-def train_step(x, y, model, optimizer, summary):
+def train_step(x, y, model, optimizer, summary, padding_idx):
   optimizer.zero_grad()
 
   x, y = Variable(x), Variable(y)
   y_bottom, y = y[:, :-1], y[:, 1:]
 
   y_top = model(x, y_bottom)
-  loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
-  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=dataset.pad)
+  loss = metrics.loss(y_top=y_top, y=y, padding_idx=padding_idx)
+  accuracy = metrics.accuracy(y_top=y_top, y=y, padding_idx=padding_idx)
   loss.mean().backward()
   optimizer.step()
 
@@ -186,7 +186,13 @@ def main():
           end='\r')
 
       try:
-        train_step(x, y, model=model, optimizer=optimizer, summary=summary)
+        train_step(
+            x,
+            y,
+            model=model,
+            optimizer=optimizer,
+            summary=summary,
+            padding_idx=dataset.pad)
       except RuntimeError as e:
         if e.args[0].startswith('cuda runtime error (2) : out of memory'):
           batch2batch_size[batch_i] //= 2
