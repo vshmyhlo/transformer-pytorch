@@ -154,9 +154,10 @@ def main():
     train_phase(
         model,
         dataset=dataset,
-        cuda=args.cuda,
         batch_size=args.batch_size,
         batch2batch_size=batch2batch_size,
+        n_devices=n_devices,
+        cuda=args.cuda,
         optimizer=optimizer,
     )
 
@@ -165,9 +166,10 @@ def main():
     eval_phase(
         model,
         dataset=dataset,
-        cuda=args.cuda,
         batch_size=32,
         batch2batch_size={},
+        n_devices=n_devices,
+        cuda=args.cuda,
     )
 
     # Saving ###################################################################
@@ -175,7 +177,8 @@ def main():
     print(warning('state saved to'), args.weights)
 
 
-def train_phase(model, dataset, optimizer, batch_size, cuda, batch2batch_size):
+def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
+                optimizer):
   summary = metrics.Summary((0, 0))
 
   for i, (batch_i, (x, y)) in zip(
@@ -221,7 +224,7 @@ def train_phase(model, dataset, optimizer, batch_size, cuda, batch2batch_size):
           loss, accuracy * 100)))
 
 
-def eval_phase(model, dataset, cuda, batch_size, batch2batch_size):
+def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
   summary = metrics.Summary((0, 0))
 
   for j, (_, (x, y)) in zip(
