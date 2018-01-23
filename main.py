@@ -98,20 +98,25 @@ def make_parser():
   return parser
 
 
-class Trainer(object):
+class StepIterator(object):
+  def log_batch(self, x, y, i):
+    return 'batch {}: x {}, y {}'.format(
+        i,
+        tuple(x.size()),
+        tuple(y.size()),
+    )
+
+
+class Trainer(StepIterator):
   def __init__(self, model, optimizer, dataset):
     self._summary = metrics.Summary((0, 0))
     self._model = model
     self._optimizer = optimizer
     self._dataset = dataset
 
-  def step(self, batch):
+  def step(self, batch, i):
     batch_i, (x, y) = batch
-
-    print(
-        danger('train batch {}: x {}, y {}'.format(i, tuple(
-            x.size()), tuple(y.size())) + ' ' * 10),
-        end='\r')
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
     if cuda:
@@ -250,7 +255,7 @@ def main():
             n_devices=n_devices,
             batch2batch_size=batch2batch_size),
     ):
-      trainer.step(batch)
+      trainer.step(batch, i)
 
     loss, accuracy = trainer.summary()
     print(
