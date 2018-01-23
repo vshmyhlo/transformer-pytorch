@@ -108,18 +108,19 @@ class StepIterator(object):
 
 
 class Trainer(StepIterator):
-  def __init__(self, model, optimizer, dataset):
+  def __init__(self, model, optimizer, dataset, cuda):
     self._summary = metrics.Summary((0, 0))
     self._model = model
     self._optimizer = optimizer
     self._dataset = dataset
+    self._cuda = cuda
 
   def step(self, batch, i):
     batch_i, (x, y) = batch
     print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
-    if cuda:
+    if self._cuda:
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
 
@@ -141,54 +142,41 @@ class Trainer(StepIterator):
         raise e
 
 
-def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
-  summary = metrics.Summary((0, 0))
+class Evaluator(StepIterator):
+  def __init__(self, model, dataset, cuda):
+    self._summary = metrics.Summary((0, 0))
+    self._model = model
+    self._dataset = dataset
+    self._cuda = cuda
 
-  for j, (_, (x, y)) in zip(
-      itertools.count(),
-      padded_batch(
-          batch_size,
-          dataset,
-          mode='tst2012',
-          n_devices=n_devices,
-          batch2batch_size=batch2batch_size),
-  ):
-    print(
-        danger('eval batch {}: x {}, y {}'.format(j, tuple(x.size()),
-                                                  tuple(y.size())) + ' ' * 10),
-        end='\r')
+  def step(self, batch, i):
+    _, (x, y) = batch
+    print(danger('eval ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-    if cuda:
+    if self._cuda:
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
 
-    y_top = model(x, y_bottom)
+    y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     accuracy = metrics.accuracy(
         y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
 
-    summary.add((loss.data, accuracy))
+    self._summary.add((loss.data, accuracy))
 
-  loss, accuracy = summary.calculate()
-  print(
-      success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
-          loss, accuracy * 100)))
 
-  for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
-    print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
-    print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
-
+def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
   # Infer ####################################################################
-  print(success('inference:'))
-  inferer = inference.Inferer(model)
-  start = Variable(torch.LongTensor(1, 1).fill_(dataset.sos))
-  if cuda:
-    start = start.cuda()
-  for true, pred in zip(y.data,
-                        inferer(x[:1], y_bottom=start, max_len=100).data):
-    print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
-    print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
+  # print(success('inference:'))
+  # inferer = inference.Inferer(model)
+  # start = Variable(torch.LongTensor(1, 1).fill_(dataset.sos))
+  # if cuda:
+  #   start = start.cuda()
+  # for true, pred in zip(y.data,
+  #                       inferer(x[:1], y_bottom=start, max_len=100).data):
+  #   print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
+  #   print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
 
 
 def main():
@@ -243,7 +231,8 @@ def main():
     print(success('epoch: {}'.format(epoch)))
 
     # Train ####################################################################
-    trainer = Trainer(model=model, optimizer=optimizer, dataset=dataset)
+    trainer = Trainer(
+        model=model, optimizer=optimizer, dataset=dataset, cuda=args.cuda)
     model.train()
 
     for i, batch in zip(
@@ -263,15 +252,28 @@ def main():
             loss, accuracy * 100)))
 
     # Eval #####################################################################
+    trainer = Evaluator(model=model, dataset=dataset, cuda=args.cuda)
     model.eval()
-    eval_phase(
-        model,
-        dataset=dataset,
-        batch_size=32,
-        batch2batch_size={},
-        n_devices=n_devices,
-        cuda=args.cuda,
-    )
+
+    for j, (_, (x, y)) in zip(
+        itertools.count(),
+        padded_batch(
+            32,
+            dataset,
+            mode='tst2012',
+            n_devices=n_devices,
+            batch2batch_size={}),
+    ):
+      evaluator.step(batch, i)
+
+    loss, accuracy = summary.calculate()
+    print(
+        success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
+            loss, accuracy * 100)))
+
+    for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
+      print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
+      print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
 
     # Saving ###################################################################
     torch.save(base_model.state_dict(), args.weights)
