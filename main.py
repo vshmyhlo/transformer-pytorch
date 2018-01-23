@@ -131,6 +131,7 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
       loss.mean().backward()
       optimizer.step()
       optimizer.zero_grad()
+      torch.cuda.empty_cache()
 
       summary.add((loss.data, accuracy))
     except RuntimeError as e:
