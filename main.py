@@ -237,7 +237,11 @@ def main():
 
     # Train ####################################################################
     trainer = Trainer(
-        model=model, optimizer=optimizer, dataset=dataset, cuda=args.cuda)
+        model=model,
+        optimizer=optimizer,
+        dataset=dataset,
+        cuda=args.cuda,
+        batch2batch_size=batch2batch_size)
     model.train()
 
     for i, batch in zip(
