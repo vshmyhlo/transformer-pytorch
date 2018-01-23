@@ -99,7 +99,7 @@ def make_parser():
 
 
 class StepIterator(object):
-  def log_batch(self, x, y, i):
+  def batch_log(self, x, y, i):
     return 'batch {}: x {}, y {}'.format(
         i,
         tuple(x.size()),
