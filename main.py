@@ -108,12 +108,13 @@ class StepIterator(object):
 
 
 class Trainer(StepIterator):
-  def __init__(self, model, optimizer, dataset, cuda):
+  def __init__(self, model, optimizer, dataset, cuda, batch2batch_size):
     self._summary = metrics.Summary((0, 0))
     self._model = model
     self._optimizer = optimizer
     self._dataset = dataset
     self._cuda = cuda
+    self._batch2batch_size = batch2batch_size
 
   def step(self, batch, i):
     batch_i, (x, y) = batch
@@ -137,7 +138,7 @@ class Trainer(StepIterator):
     except RuntimeError as e:
       if e.args[0].startswith('cuda runtime error (2) : out of memory'):
         print(danger('out of memory' + ' ' * 50))
-        batch2batch_size[batch_i] //= 2
+        self._batch2batch_size[batch_i] //= 2
       else:
         raise e
 
