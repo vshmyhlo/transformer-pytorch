@@ -177,6 +177,7 @@ def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
   #                       inferer(x[:1], y_bottom=start, max_len=100).data):
   #   print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
   #   print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
+  pass
 
 
 def main():
