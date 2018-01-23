@@ -167,6 +167,9 @@ class Evaluator(StepIterator):
 
 
 def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
+  # for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
+  #   print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
+  #   print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
   # Infer ####################################################################
   # print(success('inference:'))
   # inferer = inference.Inferer(model)
@@ -253,7 +256,7 @@ def main():
             loss, accuracy * 100)))
 
     # Eval #####################################################################
-    trainer = Evaluator(model=model, dataset=dataset, cuda=args.cuda)
+    evaluator = Evaluator(model=model, dataset=dataset, cuda=args.cuda)
     model.eval()
 
     for j, (_, (x, y)) in zip(
@@ -271,10 +274,6 @@ def main():
     print(
         success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
             loss, accuracy * 100)))
-
-    for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
-      print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
-      print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
 
     # Saving ###################################################################
     torch.save(base_model.state_dict(), args.weights)
