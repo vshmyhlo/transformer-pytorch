@@ -102,6 +102,7 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
                 optimizer):
   summary = metrics.Summary((0, 0))
 
+  torch.cuda.empty_cache()
   optimizer.zero_grad()
   for i, (batch_i, (x, y)) in zip(
       itertools.count(),
