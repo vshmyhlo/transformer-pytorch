@@ -136,7 +136,6 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
       if e.args[0].startswith('cuda runtime error (2) : out of memory'):
         print(danger('out of memory' + ' ' * 50))
         batch2batch_size[batch_i] //= 2
-        raise e
       else:
         raise e
 
