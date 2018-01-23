@@ -102,6 +102,7 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
                 optimizer):
   summary = metrics.Summary((0, 0))
 
+  optimizer.zero_grad()
   for i, (batch_i, (x, y)) in zip(
       itertools.count(),
       padded_batch(
@@ -111,7 +112,6 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
           n_devices=n_devices,
           batch2batch_size=batch2batch_size),
   ):
-    optimizer.zero_grad()
 
     print(
         danger('train batch {}: x {}, y {}'.format(i, tuple(
@@ -130,6 +130,7 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
           y_top=y_top.data, y=y.data, padding_idx=dataset.pad)
       loss.mean().backward()
       optimizer.step()
+      optimizer.zero_grad()
 
       summary.add((loss.data, accuracy))
     except RuntimeError as e:
