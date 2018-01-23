@@ -98,21 +98,15 @@ def make_parser():
   return parser
 
 
-def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
-                optimizer):
-  summary = metrics.Summary((0, 0))
+class Trainer(object):
+  def __init__(self, model, optimizer, dataset):
+    self._summary = metrics.Summary((0, 0))
+    self._model = model
+    self._optimizer = optimizer
+    self._dataset = dataset
 
-  torch.cuda.empty_cache()
-  optimizer.zero_grad()
-  for i, (batch_i, (x, y)) in zip(
-      itertools.count(),
-      padded_batch(
-          batch_size,
-          dataset,
-          mode='train',
-          n_devices=n_devices,
-          batch2batch_size=batch2batch_size),
-  ):
+  def step(self, batch):
+    batch_i, (x, y) = batch
 
     print(
         danger('train batch {}: x {}, y {}'.format(i, tuple(
@@ -125,27 +119,21 @@ def train_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda,
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     try:
-      y_top = model(x, y_bottom)
-      loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+      self._optimizer.zero_grad()
+      y_top = self._model(x, y_bottom)
+      loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
       accuracy = metrics.accuracy(
-          y_top=y_top.data, y=y.data, padding_idx=dataset.pad)
+          y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
       loss.mean().backward()
-      optimizer.step()
-      optimizer.zero_grad()
-      torch.cuda.empty_cache()
+      self._optimizer.step()
 
-      summary.add((loss.data, accuracy))
+      self._summary.add((loss.data, accuracy))
     except RuntimeError as e:
       if e.args[0].startswith('cuda runtime error (2) : out of memory'):
         print(danger('out of memory' + ' ' * 50))
         batch2batch_size[batch_i] //= 2
       else:
         raise e
-
-  loss, accuracy = summary.calculate()
-  print(
-      success('(train) loss: {:.4f}, accuracy: {:.2f}'.format(
-          loss, accuracy * 100)))
 
 
 def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
@@ -171,9 +159,9 @@ def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
     y_bottom, y = y[:, :-1], y[:, 1:]
 
     y_top = model(x, y_bottom)
-    loss = metrics.loss(y_top=y_top, y=y, padding_idx=dataset.pad)
+    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     accuracy = metrics.accuracy(
-        y_top=y_top.data, y=y.data, padding_idx=dataset.pad)
+        y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
 
     summary.add((loss.data, accuracy))
 
@@ -250,16 +238,24 @@ def main():
     print(success('epoch: {}'.format(epoch)))
 
     # Train ####################################################################
+    trainer = Trainer(model=model, optimizer=optimizer, dataset=dataset)
     model.train()
-    train_phase(
-        model,
-        dataset=dataset,
-        batch_size=args.batch_size,
-        batch2batch_size=batch2batch_size,
-        n_devices=n_devices,
-        cuda=args.cuda,
-        optimizer=optimizer,
-    )
+
+    for i, batch in zip(
+        itertools.count(),
+        padded_batch(
+            args.batch_size,
+            dataset,
+            mode='train',
+            n_devices=n_devices,
+            batch2batch_size=batch2batch_size),
+    ):
+      trainer.step(batch)
+
+    loss, accuracy = trainer.summary()
+    print(
+        success('(train) loss: {:.4f}, accuracy: {:.2f}'.format(
+            loss, accuracy * 100)))
 
     # Eval #####################################################################
     model.eval()
