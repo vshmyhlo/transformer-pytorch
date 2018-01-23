@@ -106,6 +106,9 @@ class StepIterator(object):
         tuple(y.size()),
     )
 
+  def summary(self):
+    return self._summary.calculate()
+
 
 class Trainer(StepIterator):
   def __init__(self, model, optimizer, dataset, cuda, batch2batch_size):
@@ -275,7 +278,7 @@ def main():
     ):
       evaluator.step(batch, i)
 
-    loss, accuracy = summary.calculate()
+    loss, accuracy = evaluator.summary()
     print(
         success('(eval) loss: {:.4f}, accuracy: {:.2f}'.format(
             loss, accuracy * 100)))
