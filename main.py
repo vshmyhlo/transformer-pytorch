@@ -104,8 +104,8 @@ buckets = {
     range(90, 150): 32,
     range(150, 220): 16,
     range(220, 320): 8,
-    range(320, 600): 4,
-    range(600, 1000): 2,
+    range(320, 460): 4,
+    range(460, 1000): 2,
 }
 
 
@@ -154,6 +154,8 @@ def make_parser():
   parser.add_argument("--batch-size", help="batch size", type=int, default=32)
   parser.add_argument("--size", help="transformer size", type=int, default=256)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
+  parser.add_argument(
+      "--share-embedding", help="share embedding matrix", action='store_true')
   parser.add_argument(
       "--epochs", help="number of epochs", type=int, default=10)
   parser.add_argument(
