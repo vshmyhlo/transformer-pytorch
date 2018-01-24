@@ -104,7 +104,8 @@ buckets = {
     range(90, 150): 32,
     range(150, 220): 16,
     range(220, 360): 8,
-    range(360, 1000): 4,
+    range(360, 600): 4,
+    range(600, 1000): 2,
 }
 
 
@@ -206,11 +207,8 @@ def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: beam search
-  # TODO: try mask attention
   # TODO: try attention padding mask
-  # TODO: async
   # TODO: requirements.txt file
-  # TODO: attention: in decoder self attention only attend to previous values
   # TODO: byte pair encoding
   # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
 

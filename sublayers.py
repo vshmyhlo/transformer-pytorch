@@ -30,7 +30,6 @@ class FeedForwardSublayer(nn.Module):
   def __init__(self, size):
     super().__init__()
 
-    # TODO: check if bias needed
     self.fc1 = nn.Linear(size, size * 4)
     self.fc2 = nn.Linear(4 * size, size)
     self.layer_norm = LayerNorm(size)
