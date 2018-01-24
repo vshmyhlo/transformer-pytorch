@@ -31,7 +31,7 @@ def shuffle(gen):
 
 
 buckets = {
-    range(50, 100): 64,
+    range(60, 100): 64,
     range(100, 200): 16,
     range(200, 300): 8,
     range(300, 1000): 1
@@ -137,12 +137,11 @@ class Trainer(StepIterator):
     self._optimizer.zero_grad()
     y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    accuracy = metrics.accuracy(
-        y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
+    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     loss.mean().backward()
     self._optimizer.step()
 
-    self._summary.add((loss.data, accuracy))
+    self._summary.add((loss.data, acc.data))
 
 
 class Evaluator(StepIterator):
@@ -163,10 +162,9 @@ class Evaluator(StepIterator):
 
     y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    accuracy = metrics.accuracy(
-        y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
+    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
 
-    self._summary.add((loss.data, accuracy))
+    self._summary.add((loss.data, accuracy.data))
 
 
 def eval_phase(model, dataset, batch_size, n_devices, cuda):
