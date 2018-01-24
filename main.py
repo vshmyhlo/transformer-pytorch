@@ -47,7 +47,8 @@ buckets = {
 def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
-  # TODO: fix this (ignores first sample because it doesnt fit in memory)
+  # TODO: fix this (ignores samples because they doesnt fit in memory)
+  next(g)
   next(g)
 
   for _ in itertools.count():
