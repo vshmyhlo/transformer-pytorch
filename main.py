@@ -87,13 +87,13 @@ def sorted_gen(dataset, mode):
 
 # TODO:
 def shuffle(gen):
-  # seq = list(gen)
-  # random.shuffle(seq)
-  # for x in seq:
-  #   yield x
-
-  for x in reversed(list(gen)):
+  seq = list(gen)
+  random.shuffle(seq)
+  for x in seq:
     yield x
+
+  # for x in reversed(list(gen)):
+  #   yield x
 
 
 buckets = {
