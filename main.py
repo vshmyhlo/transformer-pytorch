@@ -36,7 +36,7 @@ buckets = {range(100, 200): 16, range(200, 300): 8, range(300, 1000): 1}
 def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
-  for batch_i in itertools.count():
+  for _ in itertools.count():
     x, y = next(g)
     max_x_len = len(x)
     max_y_len = len(y)
@@ -65,7 +65,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
 
-    yield batch_i, (x, y)
+    yield x, y
 
 
 def make_parser():
@@ -120,7 +120,7 @@ class Trainer(StepIterator):
     self._cuda = cuda
 
   def step(self, batch, i):
-    _, (x, y) = batch
+    x, y = batch
     print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
@@ -147,7 +147,7 @@ class Evaluator(StepIterator):
     self._cuda = cuda
 
   def step(self, batch, i):
-    _, (x, y) = batch
+    x, y = batch
     print(danger('eval ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x, volatile=True), Variable(y, volatile=True)
@@ -223,16 +223,6 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-  # import matplotlib.pyplot as plt
-  # xs = []
-  # for _, (x, y) in padded_batch(
-  #     args.batch_size, dataset, mode='train', n_devices=n_devices):
-  #   m = max(x.size(1), y.size(1))
-  #   xs.append(m)
-  # plt.hist(xs, 1000)
-  # plt.show()
-  # fail
-
   for epoch in range(args.epochs):
     print(success('epoch: {}'.format(epoch)))
 
@@ -243,8 +233,9 @@ def main():
 
     for i, batch in zip(
         itertools.count(),
-        padded_batch(
-            args.batch_size, dataset, mode='train', n_devices=n_devices),
+        shuffle(
+            padded_batch(
+                args.batch_size, dataset, mode='train', n_devices=n_devices)),
     ):
       trainer.step(batch, i)
 
