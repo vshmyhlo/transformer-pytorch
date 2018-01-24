@@ -103,8 +103,8 @@ buckets = {
     range(45, 90): 64,
     range(90, 150): 32,
     range(150, 220): 16,
-    range(220, 360): 8,
-    range(360, 600): 4,
+    range(220, 320): 8,
+    range(320, 600): 4,
     range(600, 1000): 2,
 }
 
@@ -211,6 +211,7 @@ def main():
   # TODO: requirements.txt file
   # TODO: byte pair encoding
   # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
+  # TODO: share embedding and projection weights
 
   parser = make_parser()
   args = parser.parse_args()
