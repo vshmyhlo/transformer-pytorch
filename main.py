@@ -85,6 +85,7 @@ def sorted_gen(dataset, mode):
     yield x, y
 
 
+# TODO:
 def shuffle(gen):
   # seq = list(gen)
   # random.shuffle(seq)
@@ -101,15 +102,9 @@ buckets = {
     range(22, 45): 128,
     range(45, 90): 64,
     range(90, 150): 32,
-    range(150, 500): 16,
+    range(150, 280): 16,
+    range(280, 500): 8,
     range(500, 1000): 4,
-    # range(40, 90): 64,
-    # range(90, 150): 32,
-    # range(150, 200): 16,
-    # range(200, 240): 8,
-    # range(240, 280): 4,
-    # range(280, 350): 2,
-    # range(350, 1000): 1,
 }
 
 
