@@ -35,7 +35,8 @@ def shuffle(gen):
 
 buckets = {
     range(0, 10): 512,
-    range(10, 1000): 256,
+    range(10, 22): 256,
+    range(22, 1000): 128,
     # range(20, 40): 128,
     # range(40, 90): 64,
     # range(90, 150): 32,
