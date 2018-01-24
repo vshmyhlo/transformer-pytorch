@@ -36,8 +36,10 @@ buckets = {
     range(40, 90): 64,
     range(90, 150): 32,
     range(150, 200): 16,
-    range(200, 280): 8,
-    range(280, 800): 1,
+    range(200, 240): 8,
+    range(240, 280): 4,
+    range(280, 350): 2,
+    range(350, 800): 1,
     range(800, 1000): 0
 }
 
@@ -45,7 +47,8 @@ buckets = {
 def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
-  next(g)  # TODO: fix this (ignores first sample)
+  # TODO: fix this (ignores first sample because it doesnt fit in memory)
+  next(g)
 
   for _ in itertools.count():
     x, y = next(g)
