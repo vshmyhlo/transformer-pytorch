@@ -30,7 +30,10 @@ def shuffle(gen):
     yield x
 
 
-def padded_batch(batch_size, dataset, mode, n_devices, batch2batch_size):
+buckets = {range(100, 200): 32, range(200, 300): 16, range(300, 1000): 1}
+
+
+def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
 
   for batch_i in itertools.count():
@@ -39,10 +42,11 @@ def padded_batch(batch_size, dataset, mode, n_devices, batch2batch_size):
     max_y_len = len(y)
     xs, ys = [x], [y]
 
-    if batch_i in batch2batch_size:
-      real_batch_size = batch2batch_size[batch_i]
-    else:
-      real_batch_size = batch_size
+    real_batch_size = batch_size
+    for key in buckets:
+      if max(max_x_len, max_y_len) in key:
+        real_batch_size = buckets[key]
+        break
 
     while len(xs) < (real_batch_size * n_devices):
       x, y = next(g)
@@ -60,8 +64,6 @@ def padded_batch(batch_size, dataset, mode, n_devices, batch2batch_size):
 
     x = torch.LongTensor(x)
     y = torch.LongTensor(y)
-
-    batch2batch_size[batch_i] = real_batch_size
 
     yield batch_i, (x, y)
 
@@ -99,28 +101,26 @@ def make_parser():
 
 
 class StepIterator(object):
+  def __init__(self):
+    self._summary = metrics.Summary((0, 0))
+
   def batch_log(self, x, y, i):
-    return 'batch {}: x {}, y {}'.format(
-        i,
-        tuple(x.size()),
-        tuple(y.size()),
-    )
+    return 'batch {}: x {}, y {}'.format(i, tuple(x.size()), tuple(y.size()))
 
   def summary(self):
     return self._summary.calculate()
 
 
 class Trainer(StepIterator):
-  def __init__(self, model, optimizer, dataset, cuda, batch2batch_size):
-    self._summary = metrics.Summary((0, 0))
+  def __init__(self, model, optimizer, dataset, cuda):
+    super().__init__()
     self._model = model
     self._optimizer = optimizer
     self._dataset = dataset
     self._cuda = cuda
-    self._batch2batch_size = batch2batch_size
 
   def step(self, batch, i):
-    batch_i, (x, y) = batch
+    _, (x, y) = batch
     print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
@@ -128,27 +128,20 @@ class Trainer(StepIterator):
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
 
-    try:
-      self._optimizer.zero_grad()
-      y_top = self._model(x, y_bottom)
-      loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-      accuracy = metrics.accuracy(
-          y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
-      loss.mean().backward()
-      self._optimizer.step()
+    self._optimizer.zero_grad()
+    y_top = self._model(x, y_bottom)
+    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
+    accuracy = metrics.accuracy(
+        y_top=y_top.data, y=y.data, padding_idx=self._dataset.pad)
+    loss.mean().backward()
+    self._optimizer.step()
 
-      self._summary.add((loss.data, accuracy))
-    except RuntimeError as e:
-      if e.args[0].startswith('cuda runtime error (2) : out of memory'):
-        print(danger('out of memory' + ' ' * 50))
-        self._batch2batch_size[batch_i] //= 2
-      else:
-        raise e
+    self._summary.add((loss.data, accuracy))
 
 
 class Evaluator(StepIterator):
   def __init__(self, model, dataset, cuda):
-    self._summary = metrics.Summary((0, 0))
+    super().__init__()
     self._model = model
     self._dataset = dataset
     self._cuda = cuda
@@ -170,7 +163,7 @@ class Evaluator(StepIterator):
     self._summary.add((loss.data, accuracy))
 
 
-def eval_phase(model, dataset, batch_size, batch2batch_size, n_devices, cuda):
+def eval_phase(model, dataset, batch_size, n_devices, cuda):
   # for true, pred in zip(y.data[:3], torch.max(y_top, dim=-1)[1].data[:3]):
   #   print(warning('true:'), dataset.decode_target(true).split('</s>')[0])
   #   print(warning('pred:'), dataset.decode_target(pred).split('</s>')[0])
@@ -202,11 +195,6 @@ def main():
   parser = make_parser()
   args = parser.parse_args()
   log_args(args)
-  batch2batch_size = PersistentDict('./batch2batch_size')
-  print(
-      warning('PersistentDict: len(data) == {}'.format(
-          len(batch2batch_size.data))))
-  print(sorted(batch2batch_size.data.values()))
 
   dataset = iwslt_dataset.Dataset(
       args.dataset_path, source=args.source_lng, target=args.target_lng)
@@ -235,26 +223,28 @@ def main():
 
   optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
+  # import matplotlib.pyplot as plt
+  # xs = []
+  # for _, (x, y) in padded_batch(
+  #     args.batch_size, dataset, mode='train', n_devices=n_devices):
+  #   m = max(x.size(1), y.size(1))
+  #   xs.append(m)
+  # plt.hist(xs, 1000)
+  # plt.show()
+  # fail
+
   for epoch in range(args.epochs):
     print(success('epoch: {}'.format(epoch)))
 
     # Train ####################################################################
     trainer = Trainer(
-        model=model,
-        optimizer=optimizer,
-        dataset=dataset,
-        cuda=args.cuda,
-        batch2batch_size=batch2batch_size)
+        model=model, optimizer=optimizer, dataset=dataset, cuda=args.cuda)
     model.train()
 
     for i, batch in zip(
         itertools.count(),
         padded_batch(
-            args.batch_size,
-            dataset,
-            mode='train',
-            n_devices=n_devices,
-            batch2batch_size=batch2batch_size),
+            args.batch_size, dataset, mode='train', n_devices=n_devices),
     ):
       trainer.step(batch, i)
 
@@ -267,14 +257,9 @@ def main():
     evaluator = Evaluator(model=model, dataset=dataset, cuda=args.cuda)
     model.eval()
 
-    for j, (_, (x, y)) in zip(
+    for i, (_, (x, y)) in zip(
         itertools.count(),
-        padded_batch(
-            32,
-            dataset,
-            mode='tst2012',
-            n_devices=n_devices,
-            batch2batch_size={}),
+        padded_batch(32, dataset, mode='tst2012', n_devices=n_devices),
     ):
       evaluator.step(batch, i)
 
