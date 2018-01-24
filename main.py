@@ -14,6 +14,68 @@ import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
 
+class StepIterator(object):
+  def __init__(self):
+    self._summary = metrics.Summary((0, 0))
+
+  def batch_log(self, x, y, i):
+    return 'batch {}: x {}, y {}'.format(i, tuple(x.size()), tuple(y.size()))
+
+  def summary(self):
+    return self._summary.calculate()
+
+
+class Trainer(StepIterator):
+  def __init__(self, model, optimizer, dataset, cuda):
+    super().__init__()
+    self._model = model
+    self._optimizer = optimizer
+    self._dataset = dataset
+    self._cuda = cuda
+
+  def step(self, batch, i):
+    x, y = batch
+    # print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
+
+    x, y = Variable(x), Variable(y)
+    if self._cuda:
+      x, y = x.cuda(), y.cuda()
+    y_bottom, y = y[:, :-1], y[:, 1:]
+
+    self._optimizer.zero_grad()
+    y_top = self._model(x, y_bottom)
+    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
+    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
+    loss.mean().backward()
+    self._optimizer.step()
+
+    self._summary.add((loss.data, acc.data))
+
+
+class Evaluator(StepIterator):
+  def __init__(self, model, dataset, cuda):
+    super().__init__()
+    self._model = model
+    self._dataset = dataset
+    self._cuda = cuda
+
+  def step(self, batch, i):
+    x, y = batch
+    print(danger('eval ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
+
+    x, y = Variable(x, volatile=True), Variable(y, volatile=True)
+    if self._cuda:
+      x, y = x.cuda(), y.cuda()
+    y_bottom, y = y[:, :-1], y[:, 1:]
+
+    y_top = self._model(x, y_bottom)
+    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
+    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
+
+    self._summary.add((loss.data, accuracy.data))
+
+
 def sorted_gen(dataset, mode):
   for x, y in sorted(
       dataset.gen(mode),
@@ -37,7 +99,8 @@ buckets = {
     range(0, 10): 512,
     range(10, 22): 256,
     range(22, 45): 128,
-    range(45, 1000): 64,
+    range(45, 105): 64,
+    range(105, 1000): 32,
     # range(40, 90): 64,
     # range(90, 150): 32,
     # range(150, 200): 16,
@@ -117,68 +180,6 @@ def make_parser():
       default='addition')
 
   return parser
-
-
-class StepIterator(object):
-  def __init__(self):
-    self._summary = metrics.Summary((0, 0))
-
-  def batch_log(self, x, y, i):
-    return 'batch {}: x {}, y {}'.format(i, tuple(x.size()), tuple(y.size()))
-
-  def summary(self):
-    return self._summary.calculate()
-
-
-class Trainer(StepIterator):
-  def __init__(self, model, optimizer, dataset, cuda):
-    super().__init__()
-    self._model = model
-    self._optimizer = optimizer
-    self._dataset = dataset
-    self._cuda = cuda
-
-  def step(self, batch, i):
-    x, y = batch
-    # print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
-
-    x, y = Variable(x), Variable(y)
-    if self._cuda:
-      x, y = x.cuda(), y.cuda()
-    y_bottom, y = y[:, :-1], y[:, 1:]
-
-    self._optimizer.zero_grad()
-    y_top = self._model(x, y_bottom)
-    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    loss.mean().backward()
-    self._optimizer.step()
-
-    self._summary.add((loss.data, acc.data))
-
-
-class Evaluator(StepIterator):
-  def __init__(self, model, dataset, cuda):
-    super().__init__()
-    self._model = model
-    self._dataset = dataset
-    self._cuda = cuda
-
-  def step(self, batch, i):
-    x, y = batch
-    print(danger('eval ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
-
-    x, y = Variable(x, volatile=True), Variable(y, volatile=True)
-    if self._cuda:
-      x, y = x.cuda(), y.cuda()
-    y_bottom, y = y[:, :-1], y[:, 1:]
-
-    y_top = self._model(x, y_bottom)
-    loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-
-    self._summary.add((loss.data, accuracy.data))
 
 
 def eval_phase(model, dataset, batch_size, n_devices, cuda):
