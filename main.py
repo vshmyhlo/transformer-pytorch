@@ -272,7 +272,7 @@ def main():
     evaluator = Evaluator(model=model, dataset=dataset, cuda=args.cuda)
     model.eval()
 
-    for i, (_, (x, y)) in zip(
+    for i, batch in zip(
         itertools.count(),
         padded_batch(32, dataset, mode='tst2012', n_devices=n_devices),
     ):
