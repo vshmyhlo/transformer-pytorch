@@ -73,7 +73,7 @@ class Evaluator(StepIterator):
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
 
-    self._summary.add((loss.data, accuracy.data))
+    self._summary.add((loss.data, acc.data))
 
 
 def sorted_gen(dataset, mode):
