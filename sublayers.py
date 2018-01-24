@@ -5,10 +5,11 @@ import attention
 
 
 class AttentionSublayer(nn.Module):
-  def __init__(self, size, n_heads):
+  def __init__(self, size, n_heads, attention_type):
     super().__init__()
 
-    self.attention = attention.MultiHeadAttention(size, n_heads)
+    self.attention = attention.MultiHeadAttention(
+        size, n_heads, attention_type=attention_type)
     self.layer_norm = LayerNorm(size)
 
   def forward(self, x, states, mask=None):

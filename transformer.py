@@ -20,13 +20,27 @@ def get_attn_subsequent_mask(seq):
 
 class Tranformer(nn.Module):
   def __init__(self, source_vocab_size, target_vocab_size, size, n_layers,
-               n_heads, pe_type, dropout, padding_idx):
+               n_heads, pe_type, dropout, padding_idx, attention_type):
     super().__init__()
 
-    self.encoder = Encoder(source_vocab_size, size, n_layers, n_heads, pe_type,
-                           dropout, padding_idx)
-    self.decoder = Decoder(target_vocab_size, size, n_layers, n_heads, pe_type,
-                           dropout, padding_idx)
+    self.encoder = Encoder(
+        source_vocab_size,
+        size,
+        n_layers,
+        n_heads,
+        pe_type,
+        dropout,
+        padding_idx,
+        attention_type=attention_type)
+    self.decoder = Decoder(
+        target_vocab_size,
+        size,
+        n_layers,
+        n_heads,
+        pe_type,
+        dropout,
+        padding_idx,
+        attention_type=attention_type)
     self.projection = nn.Linear(size, target_vocab_size)
 
   def forward(self, x, y_bottom):
@@ -38,7 +52,7 @@ class Tranformer(nn.Module):
 
 class Encoder(nn.Module):
   def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
-               padding_idx):
+               padding_idx, attention_type):
     super().__init__()
 
     self.n_layers = n_layers
@@ -49,8 +63,10 @@ class Encoder(nn.Module):
         padding_idx=padding_idx)
     self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
-    self.encoder_layers = nn.ModuleList(
-        [EncoderLayer(size, n_heads) for _ in range(self.n_layers)])
+    self.encoder_layers = nn.ModuleList([
+        EncoderLayer(size, n_heads, attention_type=attention_type)
+        for _ in range(self.n_layers)
+    ])
 
   def forward(self, x):
     x = self.embedding(x)
@@ -67,7 +83,7 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
   def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
-               padding_idx):
+               padding_idx, attention_type):
     super().__init__()
 
     self.n_layers = n_layers
@@ -78,8 +94,10 @@ class Decoder(nn.Module):
         padding_idx=padding_idx)
     self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
-    self.decoder_layers = nn.ModuleList(
-        [DecoderLayer(size, n_heads) for _ in range(self.n_layers)])
+    self.decoder_layers = nn.ModuleList([
+        DecoderLayer(size, n_heads, attention_type=attention_type)
+        for _ in range(self.n_layers)
+    ])
 
   def forward(self, y_bottom, states):
     self_attention_mask = get_attn_subsequent_mask(y_bottom)
@@ -99,10 +117,11 @@ class Decoder(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-  def __init__(self, size, n_heads):
+  def __init__(self, size, n_heads, attention_type):
     super().__init__()
 
-    self.self_attention = sublayers.SelfAttentionSublayer(size, n_heads)
+    self.self_attention = sublayers.SelfAttentionSublayer(
+        size, n_heads, attention_type=attention_type)
     self.feed_forward = sublayers.FeedForwardSublayer(size)
 
   def forward(self, x):
@@ -113,11 +132,13 @@ class EncoderLayer(nn.Module):
 
 
 class DecoderLayer(nn.Module):
-  def __init__(self, size, n_heads):
+  def __init__(self, size, n_heads, attention_type):
     super().__init__()
 
-    self.self_attention = sublayers.SelfAttentionSublayer(size, n_heads)
-    self.encoder_attention = sublayers.AttentionSublayer(size, n_heads)
+    self.self_attention = sublayers.SelfAttentionSublayer(
+        size, n_heads, attention_type=attention_type)
+    self.encoder_attention = sublayers.AttentionSublayer(
+        size, n_heads, attention_type=attention_type)
     self.feed_forward = sublayers.FeedForwardSublayer(size)
 
   def forward(self, x, states, self_attention_mask):

@@ -6,10 +6,12 @@ import torch.nn.functional as F
 class MultiHeadAttention(nn.Module):
   # TODO: vectorize this
 
-  def __init__(self, size, n_heads):
+  def __init__(self, size, n_heads, attention_type):
     super().__init__()
 
-    self.attentions = nn.ModuleList([Attention(size) for _ in range(n_heads)])
+    self.attentions = nn.ModuleList([
+        Attention(size, attention_type=attention_type) for _ in range(n_heads)
+    ])
     self.projection = nn.Linear(size * n_heads, size, bias=False)
 
   def forward(self, x, states, mask):
@@ -20,13 +22,17 @@ class MultiHeadAttention(nn.Module):
 
 
 class Attention(nn.Module):
-  def __init__(self, size):
+  def __init__(self, size, attention_type):
     super().__init__()
 
     self.ql = nn.Linear(size, size, bias=False)
     self.kl = nn.Linear(size, size, bias=False)
     self.vl = nn.Linear(size, size, bias=False)
-    self.attention = LuongAttention(size)
+
+    if attention_type == 'luong':
+      self.attention = LuongAttention(size)
+    elif attention_type == 'scaled_dot_product':
+      self.attention = ScaledDotProductAttention()
 
   def forward(self, x, states, mask):
     q = self.ql(x)
@@ -40,6 +46,17 @@ class Attention(nn.Module):
     context = attended.sum(-2)
 
     return context
+
+
+class ScaledDotProductAttention(nn.Module):
+  def forward(self, q, k, mask):
+    assert q.size(-1) == k.size(-1)
+    scores = torch.bmm(q, k.transpose(2, 1)) / k.size(-1)**0.5
+    if mask is not None:
+      scores.masked_fill_(mask == 0, float('-inf'))
+    scores = F.softmax(scores, -1)
+
+    return scores
 
 
 class LuongAttention(nn.Module):

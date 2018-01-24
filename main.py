@@ -103,8 +103,8 @@ buckets = {
     range(45, 90): 64,
     range(90, 150): 32,
     range(150, 220): 16,
-    range(220, 500): 8,
-    range(500, 1000): 4,
+    range(220, 360): 8,
+    range(360, 1000): 4,
 }
 
 
@@ -170,6 +170,12 @@ def make_parser():
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.2)
   parser.add_argument(
+      "--attention-type",
+      help="attention type",
+      type=str,
+      choices=['scaled_dot_product', 'luong'],
+      default='scaled_dot_product')
+  parser.add_argument(
       "--pe-type",
       help="positional encoding type",
       type=str,
@@ -222,7 +228,8 @@ def main():
       n_heads=args.n_heads,
       pe_type=args.pe_type,
       dropout=args.dropout,
-      padding_idx=dataset.pad)
+      padding_idx=dataset.pad,
+      attention_type=args.attention_type)
   model = base_model
 
   n_devices = 1
