@@ -24,23 +24,25 @@ def sorted_gen(dataset, mode):
 
 
 def shuffle(gen):
-  seq = list(gen)
-  random.shuffle(seq)
-  for x in seq:
+  # seq = list(gen)
+  # random.shuffle(seq)
+  # for x in seq:
+  #   yield x
+
+  for x in reversed(seq):
     yield x
 
 
 buckets = {
-    range(0, 20): 256,
-    range(20, 40): 128,
-    range(40, 90): 64,
-    range(90, 150): 32,
-    range(150, 200): 16,
-    range(200, 240): 8,
-    range(240, 280): 4,
-    range(280, 350): 2,
-    range(350, 800): 1,
-    range(800, 1000): 0
+    range(0, 1000): 512,
+    # range(20, 40): 128,
+    # range(40, 90): 64,
+    # range(90, 150): 32,
+    # range(150, 200): 16,
+    # range(200, 240): 8,
+    # range(240, 280): 4,
+    # range(280, 350): 2,
+    # range(350, 1000): 1,
 }
 
 
