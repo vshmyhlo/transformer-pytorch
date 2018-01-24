@@ -30,7 +30,12 @@ def shuffle(gen):
     yield x
 
 
-buckets = {range(100, 200): 16, range(200, 300): 8, range(300, 1000): 1}
+buckets = {
+    range(50, 100): 64,
+    range(100, 200): 16,
+    range(200, 300): 8,
+    range(300, 1000): 1
+}
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
