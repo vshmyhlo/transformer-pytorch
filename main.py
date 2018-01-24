@@ -29,7 +29,7 @@ def shuffle(gen):
   # for x in seq:
   #   yield x
 
-  for x in reversed(seq):
+  for x in reversed(gen):
     yield x
 
 
