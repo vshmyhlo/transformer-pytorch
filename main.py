@@ -34,7 +34,8 @@ def shuffle(gen):
 
 
 buckets = {
-    range(0, 1000): 512,
+    range(0, 10): 512,
+    range(10, 1000): 256,
     # range(20, 40): 128,
     # range(40, 90): 64,
     # range(90, 150): 32,
@@ -61,7 +62,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 
     real_batch_size = batch_size
     for key in buckets:
-      if max(max_x_len, max_y_len) in key:
+      if max(max_x_len + 2, max_y_len + 2) in key:
         real_batch_size = buckets[key]
         break
 
