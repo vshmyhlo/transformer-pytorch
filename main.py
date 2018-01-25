@@ -13,16 +13,21 @@ import inference
 import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
+
+def k(n):
+  return int(n * 0.5)
+
+
 buckets = {
-    range(0, 10): 512,
-    range(10, 22): 256,
-    range(22, 38): 128,
-    range(38, 88): 64,
-    range(88, 145): 32,
-    range(145, 220): 16,
-    range(220, 320): 8,
-    range(320, 460): 4,
-    range(460, 1000): 2,
+    range(k(0), k(10)): 512,
+    range(k(10), k(22)): 256,
+    range(k(22), k(38)): 128,
+    range(k(38), k(88)): 64,
+    range(k(88), k(145)): 32,
+    range(k(145), k(220)): 16,
+    range(k(220), k(320)): 8,
+    range(k(320), k(460)): 4,
+    range(k(460), k(1000)): 2,
 }
 
 
@@ -203,7 +208,6 @@ def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: beam search
-  # TODO: try attention padding mask
   # TODO: requirements.txt file
   # TODO: byte pair encoding
   # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
