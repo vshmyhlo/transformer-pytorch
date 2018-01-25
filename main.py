@@ -13,21 +13,16 @@ import inference
 import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
-
-def k(n):
-  return int(n * 0.1)
-
-
 buckets = {
-    range(0, 10): k(512),
-    range(10, 22): k(256),
-    range(22, 38): k(128),
-    range(38, 88): k(64),
-    range(88, 145): k(32),
-    range(145, 220): k(16),
-    range(220, 320): k(8),
-    range(320, 460): k(4),
-    range(460, 1000): k(2),
+    range(0, 10): 512,
+    range(10, 22): 256,
+    range(22, 38): 128,
+    range(38, 88): 64,
+    range(88, 145): 32,
+    range(145, 220): 16,
+    range(220, 320): 8,
+    range(320, 460): 4,
+    range(460, 1000): 2
 }
 
 
