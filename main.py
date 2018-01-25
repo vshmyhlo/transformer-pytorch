@@ -126,11 +126,13 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     if max(max_x_len, max_y_len) > 100:
       continue  # TODO: fix this
 
-    # TODO: real_batch_size = batch_size
-    for key in buckets:
-      if max(max_x_len + 2, max_y_len + 2) in key:
-        real_batch_size = buckets[key]
-        break
+    if batch_size is None:
+      for key in buckets:
+        if max(max_x_len + 2, max_y_len + 2) in key:
+          real_batch_size = buckets[key]
+          break
+    else:
+      real_batch_size = batch_size
 
     while len(xs) < (real_batch_size * n_devices):
       x, y = next(g)
@@ -155,7 +157,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
 def make_parser():
   parser = argparse.ArgumentParser()
   parser.add_argument("--weights", help="weight file", type=str, required=True)
-  parser.add_argument("--batch-size", help="batch size", type=int, default=32)
+  parser.add_argument("--batch-size", help="batch size", type=int)
   parser.add_argument("--size", help="transformer size", type=int, default=256)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
