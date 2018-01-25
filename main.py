@@ -165,7 +165,7 @@ def make_parser():
   parser.add_argument(
       "--learning-rate", help="learning rate", type=float, default=0.001)
   parser.add_argument(
-      "--dropout", help="dropout probability", type=float, default=0.2)
+      "--dropout", help="dropout probability", type=float, default=0.1)
   parser.add_argument(
       "--attention-type",
       help="attention type",
