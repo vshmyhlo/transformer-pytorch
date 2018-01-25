@@ -47,7 +47,7 @@ class Trainer(StepIterator):
 
   def step(self, batch, i):
     x, y = batch
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end=' ')
 
     x, y = Variable(x), Variable(y)
     if self._cuda:

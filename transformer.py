@@ -42,7 +42,7 @@ class Tranformer(nn.Module):
         dropout,
         padding_idx,
         attention_type=attention_type)
-    self.projection = nn.Linear(size, target_vocab_size)  # TODO: check bias
+    self.projection = nn.Linear(size, target_vocab_size, bias=False)
 
     if share_embedding:
       self.projection.weight = self.decoder.embedding.weight
