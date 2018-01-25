@@ -97,15 +97,11 @@ def sorted_gen(dataset, mode):
     yield x, y
 
 
-# TODO:
 def shuffle(gen):
   seq = list(gen)
   random.shuffle(seq)
   for x in seq:
     yield x
-
-  # for x in reversed(list(gen)):
-  #   yield x
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
@@ -213,7 +209,9 @@ def main():
   # TODO: byte pair encoding
   # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
   # TODO: share embedding and projection weights
+  # TODO: embedding and projection weights scaling
   # TODO: learning_rate scheduling
+  # TODO: weight initialization
 
   parser = make_parser()
   args = parser.parse_args()
@@ -230,7 +228,8 @@ def main():
       pe_type=args.pe_type,
       dropout=args.dropout,
       padding_idx=dataset.pad,
-      attention_type=args.attention_type)
+      attention_type=args.attention_type,
+      share_embedding=args.share_embedding)
   model = base_model
 
   n_devices = 1

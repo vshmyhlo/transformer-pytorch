@@ -20,7 +20,8 @@ def get_attn_subsequent_mask(seq):
 
 class Tranformer(nn.Module):
   def __init__(self, source_vocab_size, target_vocab_size, size, n_layers,
-               n_heads, pe_type, dropout, padding_idx, attention_type):
+               n_heads, pe_type, dropout, padding_idx, attention_type,
+               share_embedding):
     super().__init__()
 
     self.encoder = Encoder(
@@ -41,7 +42,10 @@ class Tranformer(nn.Module):
         dropout,
         padding_idx,
         attention_type=attention_type)
-    self.projection = nn.Linear(size, target_vocab_size)
+    self.projection = nn.Linear(size, target_vocab_size)  # TODO: check bias
+
+    if share_embedding:
+      self.projection.weight = self.decoder.embedding.weight
 
   def forward(self, x, y_bottom):
     encoder_states = self.encoder(x)
@@ -186,12 +190,7 @@ class PositionalEncoding(nn.Module):
 
       return x
     elif self.pe_type == 'addition':
-      # encoding = torch.cat([encoding_sin, encoding_cos], -1)
-      # x += encoding
-
-      x = torch.cat([
-          x[:, :, 0::2] + encoding_sin,
-          x[:, :, 1::2] + encoding_cos,
-      ], -1)
+      encoding = torch.cat([encoding_sin, encoding_cos], -1)
+      x += encoding
 
       return x
