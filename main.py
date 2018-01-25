@@ -13,6 +13,18 @@ import inference
 import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
+buckets = {
+    range(0, 10): 512,
+    range(10, 22): 256,
+    range(22, 42): 128,
+    range(42, 90): 64,
+    range(90, 150): 32,
+    range(150, 220): 16,
+    range(220, 320): 8,
+    range(320, 460): 4,
+    range(460, 1000): 2,
+}
+
 
 class StepIterator(object):
   def __init__(self):
@@ -94,19 +106,6 @@ def shuffle(gen):
 
   # for x in reversed(list(gen)):
   #   yield x
-
-
-buckets = {
-    range(0, 10): 512,
-    range(10, 22): 256,
-    range(22, 45): 128,
-    range(45, 90): 64,
-    range(90, 150): 32,
-    range(150, 220): 16,
-    range(220, 320): 8,
-    range(320, 460): 4,
-    range(460, 1000): 2,
-}
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
