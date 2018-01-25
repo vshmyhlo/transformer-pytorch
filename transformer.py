@@ -68,7 +68,8 @@ class Encoder(nn.Module):
     self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
     self.encoder_layers = nn.ModuleList([
-        EncoderLayer(size, n_heads, attention_type=attention_type)
+        EncoderLayer(
+            size, n_heads, attention_type=attention_type, dropout=dropout)
         for _ in range(self.n_layers)
     ])
 
@@ -99,7 +100,8 @@ class Decoder(nn.Module):
     self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
     self.dropout = nn.Dropout(dropout)
     self.decoder_layers = nn.ModuleList([
-        DecoderLayer(size, n_heads, attention_type=attention_type)
+        DecoderLayer(
+            size, n_heads, attention_type=attention_type, dropout=dropout)
         for _ in range(self.n_layers)
     ])
 
@@ -121,12 +123,12 @@ class Decoder(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-  def __init__(self, size, n_heads, attention_type):
+  def __init__(self, size, n_heads, attention_type, dropout):
     super().__init__()
 
     self.self_attention = sublayers.SelfAttentionSublayer(
-        size, n_heads, attention_type=attention_type)
-    self.feed_forward = sublayers.FeedForwardSublayer(size)
+        size, n_heads, attention_type=attention_type, dropout=dropout)
+    self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
   def forward(self, x):
     x = self.self_attention(x)
@@ -136,14 +138,14 @@ class EncoderLayer(nn.Module):
 
 
 class DecoderLayer(nn.Module):
-  def __init__(self, size, n_heads, attention_type):
+  def __init__(self, size, n_heads, attention_type, dropout):
     super().__init__()
 
     self.self_attention = sublayers.SelfAttentionSublayer(
-        size, n_heads, attention_type=attention_type)
+        size, n_heads, attention_type=attention_type, dropout=dropout)
     self.encoder_attention = sublayers.AttentionSublayer(
-        size, n_heads, attention_type=attention_type)
-    self.feed_forward = sublayers.FeedForwardSublayer(size)
+        size, n_heads, attention_type=attention_type, dropout=dropout)
+    self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
   def forward(self, x, states, self_attention_mask):
     x = self.self_attention(x, self_attention_mask)

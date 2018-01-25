@@ -116,7 +116,7 @@ def padded_batch(batch_size, dataset, mode, n_devices):
     max_y_len = len(y)
     xs, ys = [x], [y]
 
-    # real_batch_size = batch_size
+    # TODO: real_batch_size = batch_size
     for key in buckets:
       if max(max_x_len + 2, max_y_len + 2) in key:
         real_batch_size = buckets[key]
