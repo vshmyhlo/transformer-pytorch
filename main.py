@@ -15,7 +15,7 @@ from utils import success, warning, danger, log_args, PersistentDict
 
 
 def k(n):
-  return int(n * 0.5)
+  return int(n * 0.25)
 
 
 buckets = {
@@ -52,7 +52,7 @@ class Trainer(StepIterator):
 
   def step(self, batch, i):
     x, y = batch
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
 
     x, y = Variable(x), Variable(y)
     if self._cuda:
