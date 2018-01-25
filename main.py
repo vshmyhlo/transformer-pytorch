@@ -16,8 +16,8 @@ from utils import success, warning, danger, log_args, PersistentDict
 buckets = {
     range(0, 10): 512,
     range(10, 22): 256,
-    range(22, 42): 128,
-    range(42, 88): 64,
+    range(22, 38): 128,
+    range(38, 88): 64,
     range(88, 150): 32,
     range(150, 220): 16,
     range(220, 320): 8,
@@ -47,7 +47,7 @@ class Trainer(StepIterator):
 
   def step(self, batch, i):
     x, y = batch
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end=' ')
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
 
     x, y = Variable(x), Variable(y)
     if self._cuda:
@@ -200,6 +200,7 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
 
 
 def main():
+  # TODO: check dropout
   # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: beam search
