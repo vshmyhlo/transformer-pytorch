@@ -31,7 +31,7 @@ class StepIterator(object):
     self._summary = metrics.Summary((0, 0))
 
   def batch_log(self, x, y, i):
-    return 'batch {}: x {}, y {}'.format(i, tuple(x.size()), tuple(y.size()))
+    return 'batch {}: ({}, {}, {})'.format(i, x.size(0), x.size(1), y.size(1))
 
   def summary(self):
     return self._summary.calculate()
@@ -47,8 +47,7 @@ class Trainer(StepIterator):
 
   def step(self, batch, i):
     x, y = batch
-    # print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
     if self._cuda:
