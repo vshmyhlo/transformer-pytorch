@@ -111,7 +111,8 @@ def shuffle(gen):
   seq = list(gen)
   random.shuffle(seq)
   for x in seq:
-    yield x
+    if max(x[0].size(-1), x[1].size(-1)) < 100:
+      yield x
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
