@@ -68,6 +68,12 @@ class Trainer(StepIterator):
 
     self._summary.add((loss.data, acc.data))
 
+    if i % 50 == 0:
+      loss, accuracy = self.summary()
+      print(
+          success('(train) loss: {:.4f}, accuracy: {:.2f}'.format(
+              loss, accuracy * 100)))
+
 
 class Evaluator(StepIterator):
   def __init__(self, model, dataset, cuda):
