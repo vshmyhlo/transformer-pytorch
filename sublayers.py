@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
 import attention
 
@@ -36,6 +37,9 @@ class FeedForwardSublayer(nn.Module):
     self.fc2 = nn.Linear(4 * size, size)
     self.dropout = nn.Dropout(dropout)
     self.layer_norm = LayerNorm(size)
+
+    init.xavier_normal(self.fc1.weight)
+    init.xavier_normal(self.fc2.weight)
 
   def forward(self, x):
     saved = x

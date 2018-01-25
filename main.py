@@ -15,7 +15,7 @@ from utils import success, warning, danger, log_args, PersistentDict
 
 
 def k(n):
-  return int(n * 0.25)
+  return int(n * 0.1)
 
 
 buckets = {

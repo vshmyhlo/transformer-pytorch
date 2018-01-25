@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
 
 
@@ -13,6 +14,8 @@ class MultiHeadAttention(nn.Module):
         Attention(size, attention_type=attention_type) for _ in range(n_heads)
     ])
     self.projection = nn.Linear(size * n_heads, size, bias=False)
+
+    init.xavier_normal(self.projection.weight)
 
   def forward(self, x, states, mask):
     xs = [attention(x, states, mask) for attention in self.attentions]
@@ -33,6 +36,10 @@ class Attention(nn.Module):
       self.attention = LuongAttention(size)
     elif attention_type == 'scaled_dot_product':
       self.attention = ScaledDotProductAttention()
+
+    init.xavier_normal(self.ql.weight)
+    init.xavier_normal(self.kl.weight)
+    init.xavier_normal(self.vl.weight)
 
   def forward(self, x, states, mask):
     q = self.ql(x)
@@ -66,6 +73,8 @@ class LuongAttention(nn.Module):
   def __init__(self, size):
     super().__init__()
     self.fc = nn.Linear(size, size, bias=False)
+
+    init.xavier_normal(self.fc.weight)
 
   def forward(self, q, k, mask):
     wk = self.fc(k)
