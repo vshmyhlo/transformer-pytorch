@@ -53,6 +53,7 @@ class ScaledDotProductAttention(nn.Module):
     assert q.size(-1) == k.size(-1)
     scores = torch.bmm(q, k.transpose(2, 1)) / k.size(-1)**0.5
     if mask is not None:
+      # TODO: mask variable or its data?
       scores.masked_fill_(mask == 0, float('-inf'))
     scores = F.softmax(scores, -1)
 
@@ -71,6 +72,7 @@ class LuongAttention(nn.Module):
     wk = wk.transpose(2, 1)
     scores = torch.bmm(q, wk)
     if mask is not None:
+      # TODO: mask variable or its data?
       scores.masked_fill_(mask == 0, float('-inf'))
     scores = F.softmax(scores, -1)
 

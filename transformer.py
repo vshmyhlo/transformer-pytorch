@@ -5,13 +5,23 @@ import sublayers
 import numpy as np
 
 
-def get_attn_subsequent_mask(seq):
-  # TODO: check how this works
+# TODO: check how this works
+def get_attention_padding_mask(seq_q, seq_k, padding_idx):
+  ''' Indicate the padding-related part to mask '''
+  assert seq_q.dim() == 2 and seq_k.dim() == 2
+
+  pad_attn_mask = (seq_k.data != padding_idx).unsqueeze(1)
+  return pad_attn_mask
+
+
+# TODO: check how this works
+def get_attention_subsequent_mask(seq):
   ''' Get an attention mask to avoid using the subsequent info.'''
   assert seq.dim() == 2
-  attn_shape = (1, seq.size(1), seq.size(1))
-  # TODO: check this
-  subsequent_mask = np.tril(np.ones(attn_shape), k=0).astype('uint8')
+
+  attention_shape = (1, seq.size(1), seq.size(1))
+  # TODO: check typecasting
+  subsequent_mask = np.tril(np.ones(attention_shape), k=0).astype('uint8')
   subsequent_mask = torch.from_numpy(subsequent_mask)
   if seq.is_cuda:
     subsequent_mask = subsequent_mask.cuda()
@@ -24,6 +34,7 @@ class Tranformer(nn.Module):
                share_embedding):
     super().__init__()
 
+    self.padding_idx = padding_idx
     self.encoder = Encoder(
         source_vocab_size,
         size,
@@ -48,8 +59,20 @@ class Tranformer(nn.Module):
       self.projection.weight = self.decoder.embedding.weight
 
   def forward(self, x, y_bottom):
-    encoder_states = self.encoder(x)
-    y_top = self.decoder(y_bottom, encoder_states)
+    encoder_self_attention_mask = Variable(
+        get_attention_padding_mask(x, x, padding_idx=self.padding_idx))
+    decoder_self_attention_mask = Variable(
+        get_attention_subsequent_mask(y_bottom))
+    decoder_encoder_attention_mask = Variable(
+        get_attention_padding_mask(y_bottom, x, padding_idx=self.padding_idx))
+
+    encoder_states = self.encoder(
+        x, self_attention_mask=encoder_self_attention_mask)
+    y_top = self.decoder(
+        y_bottom,
+        encoder_states,
+        self_attention_mask=decoder_self_attention_mask,
+        encoder_attention_mask=decoder_encoder_attention_mask)
     y_top = self.projection(y_top)
     return y_top
 
@@ -73,13 +96,13 @@ class Encoder(nn.Module):
         for _ in range(self.n_layers)
     ])
 
-  def forward(self, x):
+  def forward(self, x, self_attention_mask):
     x = self.embedding(x)
     x = self.positional_encoding(x)
     x = self.dropout(x)
 
     for layer in self.encoder_layers:
-      x = layer(x)
+      x = layer(x, self_attention_mask=self_attention_mask)
 
     # x /= (self.n_heads**2 * self.n_layers)
 
@@ -105,17 +128,18 @@ class Decoder(nn.Module):
         for _ in range(self.n_layers)
     ])
 
-  def forward(self, y_bottom, states):
-    self_attention_mask = get_attn_subsequent_mask(y_bottom)
-    self_attention_mask = Variable(self_attention_mask)
-
+  def forward(self, y_bottom, states, self_attention_mask,
+              encoder_attention_mask):
     y_bottom = self.embedding(y_bottom)
     y_bottom = self.positional_encoding(y_bottom)
     y_bottom = self.dropout(y_bottom)
 
     for layer in self.decoder_layers:
       y_bottom = layer(
-          y_bottom, states, self_attention_mask=self_attention_mask)
+          y_bottom,
+          states,
+          self_attention_mask=self_attention_mask,
+          encoder_attention_mask=encoder_attention_mask)
 
     # y_bottom /= self.n_heads
 
@@ -130,8 +154,8 @@ class EncoderLayer(nn.Module):
         size, n_heads, attention_type=attention_type, dropout=dropout)
     self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
-  def forward(self, x):
-    x = self.self_attention(x)
+  def forward(self, x, self_attention_mask):
+    x = self.self_attention(x, mask=self_attention_mask)
     x = self.feed_forward(x)
 
     return x
@@ -147,9 +171,9 @@ class DecoderLayer(nn.Module):
         size, n_heads, attention_type=attention_type, dropout=dropout)
     self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
-  def forward(self, x, states, self_attention_mask):
-    x = self.self_attention(x, self_attention_mask)
-    x = self.encoder_attention(x, states)
+  def forward(self, x, states, self_attention_mask, encoder_attention_mask):
+    x = self.self_attention(x, mask=self_attention_mask)
+    x = self.encoder_attention(x, states, mask=encoder_attention_mask)
     x = self.feed_forward(x)
 
     return x

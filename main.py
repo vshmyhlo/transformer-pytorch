@@ -200,7 +200,6 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
 
 
 def main():
-  # TODO: check dropout
   # TODO: try lowercase everything
   # TODO: visualize attention
   # TODO: beam search
