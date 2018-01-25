@@ -111,22 +111,20 @@ def shuffle(gen):
   seq = list(gen)
   random.shuffle(seq)
   for x in seq:
-    if max(x[0].size(-1), x[1].size(-1)) < 100:
-      yield x
+    yield x
 
 
 def padded_batch(batch_size, dataset, mode, n_devices):
   g = sorted_gen(dataset, mode)
-
-  # TODO: fix this (ignores samples because they doesnt fit in memory)
-  next(g)
-  next(g)
 
   for _ in itertools.count():
     x, y = next(g)
     max_x_len = len(x)
     max_y_len = len(y)
     xs, ys = [x], [y]
+
+    if max(max_x_len, max_y_len) > 100:
+      continue  # TODO: fix this
 
     # TODO: real_batch_size = batch_size
     for key in buckets:
