@@ -212,11 +212,11 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
   pass
 
 
-def make_optimizer(optimizer, learning_rate):
+def make_optimizer(parameters, optimizer, learning_rate):
   if optimizer == 'adam':
-    return optim.Adam(model.parameters(), lr=learning_rate)
+    return optim.Adam(parameters, lr=learning_rate)
   elif optimizer == 'momentum':
-    return optim.SGD(model.parameters(), lr=learning_rate, momentum=0.99)
+    return optim.SGD(parameters, lr=learning_rate, momentum=0.99)
 
 
 def main():
@@ -266,7 +266,8 @@ def main():
     print(warning('state loaded from'), args.weights)
     base_model.load_state_dict(torch.load(args.weights))
 
-  optimizer = make_optimizer(args.optimizer, args.learning_rate)
+  optimizer = make_optimizer(model.parameters(), args.optimizer,
+                             args.learning_rate)
 
   for epoch in range(args.epochs):
     print(success('epoch: {}'.format(epoch)))
