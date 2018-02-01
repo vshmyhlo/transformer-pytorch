@@ -47,7 +47,7 @@ class Trainer(StepIterator):
 
   def step(self, batch, i):
     x, y = batch
-    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10)
+    print(danger('train ' + self.batch_log(x, y, i)) + ' ' * 10, end='\r')
 
     x, y = Variable(x), Variable(y)
     if self._cuda:
@@ -174,6 +174,12 @@ def make_parser():
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.1)
   parser.add_argument(
+      "--optimizer",
+      help='optimizer type',
+      type=str,
+      choices=['adam', 'momentum'],
+      default='adam')
+  parser.add_argument(
       "--attention-type",
       help="attention type",
       type=str,
@@ -206,6 +212,13 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
   pass
 
 
+def make_optimizer(optimizer, learning_rate):
+  if optimizer == 'adam':
+    return optim.Adam(model.parameters(), lr=learning_rate)
+  elif optimizer == 'momentum':
+    return optim.SGD(model.parameters(), lr=learning_rate, momentum=0.99)
+
+
 def main():
   # TODO: try lowercase everything
   # TODO: visualize attention
@@ -217,6 +230,10 @@ def main():
   # TODO: embedding and projection weights scaling
   # TODO: learning_rate scheduling
   # TODO: weight initialization
+  # TODO: try disable share_embedding
+  # TODO: check masking works correctly
+  # TODO: hard negatives mining
+  # TODO: sort args
 
   parser = make_parser()
   args = parser.parse_args()
@@ -249,7 +266,7 @@ def main():
     print(warning('state loaded from'), args.weights)
     base_model.load_state_dict(torch.load(args.weights))
 
-  optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
+  optimizer = make_optimizer(args.optimizer, args.learning_rate)
 
   for epoch in range(args.epochs):
     print(success('epoch: {}'.format(epoch)))
