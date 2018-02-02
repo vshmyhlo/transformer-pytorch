@@ -63,7 +63,7 @@ class Trainer(StepIterator):
 
     self._summary.add((loss.data, acc.data))
 
-    if i % 50 == 0:
+    if i % 100 == 0:
       loss, accuracy = self.summary()
       print(
           success('(train) loss: {:.4f}, accuracy: {:.2f}'.format(
@@ -214,7 +214,8 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
 
 def make_optimizer(parameters, optimizer, learning_rate):
   if optimizer == 'adam':
-    return optim.Adam(parameters, lr=learning_rate)
+    return optim.Adam(
+        parameters, lr=learning_rate, betas=(0.9, 0.98), eps=1e-9)
   elif optimizer == 'momentum':
     return optim.SGD(parameters, lr=learning_rate, momentum=0.99)
 
@@ -234,6 +235,7 @@ def main():
   # TODO: check masking works correctly
   # TODO: hard negatives mining
   # TODO: sort args
+  # TODO: label smoothing
 
   parser = make_parser()
   args = parser.parse_args()

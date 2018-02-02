@@ -27,6 +27,7 @@ class Summary(object):
 
 def loss(y_top, y, padding_idx):
   not_padding = y != padding_idx
+  # TODO: ignore_index argument
   loss = F.cross_entropy(y_top[not_padding], y[not_padding], reduce=False)
 
   return loss
