@@ -104,8 +104,6 @@ class Encoder(nn.Module):
     for layer in self.encoder_layers:
       x = layer(x, self_attention_mask=self_attention_mask)
 
-    # x /= (self.n_heads**2 * self.n_layers)
-
     return x
 
 
@@ -140,8 +138,6 @@ class Decoder(nn.Module):
           states,
           self_attention_mask=self_attention_mask,
           encoder_attention_mask=encoder_attention_mask)
-
-    # y_bottom /= self.n_heads
 
     return y_bottom
 

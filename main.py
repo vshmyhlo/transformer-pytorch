@@ -174,11 +174,14 @@ def make_parser():
   parser.add_argument(
       "--dropout", help="dropout probability", type=float, default=0.1)
   parser.add_argument(
+      "--momentum", help='momentum value', type=float, default=0.9)
+  parser.add_argument(
       "--optimizer",
       help='optimizer type',
       type=str,
       choices=['adam', 'momentum'],
       default='adam')
+
   parser.add_argument(
       "--attention-type",
       help="attention type",
@@ -212,12 +215,13 @@ def eval_phase(model, dataset, batch_size, n_devices, cuda):
   pass
 
 
-def make_optimizer(parameters, optimizer, learning_rate):
+# TODO: try larger betas
+def make_optimizer(parameters, optimizer, learning_rate, momentum):
   if optimizer == 'adam':
     return optim.Adam(
-        parameters, lr=learning_rate, betas=(0.9, 0.98), eps=1e-9)
+        parameters, lr=learning_rate, betas=(momentum, 0.98), eps=1e-9)
   elif optimizer == 'momentum':
-    return optim.SGD(parameters, lr=learning_rate, momentum=0.99)
+    return optim.SGD(parameters, lr=learning_rate, momentum=momentum)
 
 
 def main():
@@ -236,6 +240,7 @@ def main():
   # TODO: hard negatives mining
   # TODO: sort args
   # TODO: label smoothing
+  # TODO: linear attention
 
   parser = make_parser()
   args = parser.parse_args()
@@ -268,8 +273,11 @@ def main():
     print(warning('state loaded from'), args.weights)
     base_model.load_state_dict(torch.load(args.weights))
 
-  optimizer = make_optimizer(model.parameters(), args.optimizer,
-                             args.learning_rate)
+  optimizer = make_optimizer(
+      model.parameters(),
+      args.optimizer,
+      learning_rate=args.learning_rate,
+      momentum=args.momentum)
 
   for epoch in range(args.epochs):
     print(success('epoch: {}'.format(epoch)))
