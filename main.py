@@ -26,6 +26,12 @@ buckets = {
 }
 
 
+# FIXME: very raw, basic impl
+def label_smoothing(y):
+  print(np.unique(y.numpy()))
+  return y
+
+
 class StepIterator(object):
   def __init__(self):
     self._summary = metrics.Summary((0, 0))
@@ -53,12 +59,13 @@ class Trainer(StepIterator):
     if self._cuda:
       x, y = x.cuda(), y.cuda()
     y_bottom, y = y[:, :-1], y[:, 1:]
+    # y = label_smoothing(y)
 
     self._optimizer.zero_grad()
     y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    loss.mean().backward()
+    loss.topk(loss.size(0) // 4).mean().backward()
     self._optimizer.step()
 
     self._summary.add((loss.data, acc.data))
