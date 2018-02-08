@@ -65,7 +65,7 @@ class Trainer(StepIterator):
     y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    loss.topk(loss.size(0) // 4).mean().backward()
+    loss.topk(loss.size(0) // 4)[0].mean().backward()
     self._optimizer.step()
 
     self._summary.add((loss.data, acc.data))
