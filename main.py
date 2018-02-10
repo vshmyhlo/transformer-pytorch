@@ -32,6 +32,14 @@ def label_smoothing(y):
   return y
 
 
+def backward_loss(loss, ohem_ratio, batch_size):
+  if ohem_ratio is not None:
+    topk = round(loss.size(0) * ohem_ratio)
+    loss = loss.topk(topk)[0]
+
+  (loss.sum() / batch_size).backward()  # TODO: mean or sum?
+
+
 class StepIterator(object):
   def __init__(self):
     self._summary = metrics.Summary((0, 0))
@@ -44,12 +52,13 @@ class StepIterator(object):
 
 
 class Trainer(StepIterator):
-  def __init__(self, model, optimizer, dataset, cuda):
+  def __init__(self, model, optimizer, dataset, ohem_ratio, cuda):
     super().__init__()
     self._model = model
     self._optimizer = optimizer
     self._dataset = dataset
     self._cuda = cuda
+    self._ohem_ratio = ohem_ratio
 
   def step(self, batch, i):
     x, y = batch
@@ -65,7 +74,7 @@ class Trainer(StepIterator):
     y_top = self._model(x, y_bottom)
     loss = metrics.loss(y_top=y_top, y=y, padding_idx=self._dataset.pad)
     acc = metrics.accuracy(y_top=y_top, y=y, padding_idx=self._dataset.pad)
-    loss.topk(loss.size(0) // 4)[0].sum().backward()  # TODO: mean or sum?
+    backward_loss(loss, ohem_ratio=self._ohem_ratio, batch_size=y_top.size(0))
     self._optimizer.step()
 
     self._summary.add((loss.data, acc.data))
@@ -161,6 +170,7 @@ def make_parser():
   parser.add_argument("--weights", help="weight file", type=str, required=True)
   parser.add_argument("--batch-size", help="batch size", type=int)
   parser.add_argument("--size", help="transformer size", type=int, default=256)
+  parser.add_argument("--ohem-ratio", help='ohem ratio', type=float)
   parser.add_argument("--cuda", help="use cuda", action='store_true')
   parser.add_argument(
       "--share-embedding", help="share embedding matrix", action='store_true')
@@ -244,7 +254,6 @@ def main():
   # TODO: weight initialization
   # TODO: try disable share_embedding
   # TODO: check masking works correctly
-  # TODO: hard negatives mining
   # TODO: sort args
   # TODO: label smoothing
   # TODO: linear attention
@@ -291,7 +300,11 @@ def main():
 
     # Train ####################################################################
     trainer = Trainer(
-        model=model, optimizer=optimizer, dataset=dataset, cuda=args.cuda)
+        model=model,
+        optimizer=optimizer,
+        dataset=dataset,
+        ohem_ratio=args.ohem_ratio,
+        cuda=args.cuda)
     model.train()
 
     for i, batch in zip(
