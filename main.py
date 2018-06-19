@@ -13,6 +13,8 @@ import inference
 import metrics
 from utils import success, warning, danger, log_args, PersistentDict
 
+# TODO: remove buckets and simplify code
+
 buckets = {
     range(0, 10): 512,
     range(10, 22): 256,
