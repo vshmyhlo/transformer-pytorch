@@ -38,91 +38,91 @@ word_styles = [
 
 
 def encode(template, subs):
-  input = list(template) + ['<f>']
-  for sub in subs:
-    input += list(sub) + ['<n>']
-  input = input[:-1]
-  output = list(template.format(*subs))
-  return [sym2id[x] for x in input], [sym2id[x] for x in output]
+    input = list(template) + ['<f>']
+    for sub in subs:
+        input += list(sub) + ['<n>']
+    input = input[:-1]
+    output = list(template.format(*subs))
+    return [sym2id[x] for x in input], [sym2id[x] for x in output]
 
 
 def decode(ids):
-  return ''.join([id2sym[id] for id in ids])
+    return ''.join([id2sym[id] for id in ids])
 
 
 def sample_num():
-  num = str(np.random.randint(1000))
-  return '{}', [num]
+    num = str(np.random.randint(1000))
+    return '{}', [num]
 
 
 def sample_word():
-  word = faker.word()
-  style = np.random.choice(word_styles)
-  return '{}', [style(word)]
+    word = faker.word()
+    style = np.random.choice(word_styles)
+    return '{}', [style(word)]
 
 
 def sample_percent():
-  text, subs = sample_num()
-  return text + '%', subs
+    text, subs = sample_num()
+    return text + '%', subs
 
 
 def sample_nth():
-  text, subs = sample_num()
-  return text + '-th', subs
+    text, subs = sample_num()
+    return text + '-th', subs
 
 
 def sample_word_colon_num():
-  word, word_subs = sample_word()
-  num, num_subs = sample_num()
-  return word + ': ' + num, word_subs + num_subs
+    word, word_subs = sample_word()
+    num, num_subs = sample_num()
+    return word + ': ' + num, word_subs + num_subs
 
 
 def sample_part():
-  sample = np.random.choice([
-      sample_word,
-      sample_word,
-      sample_word,
-      sample_word,
-      sample_num,
-      sample_percent,
-      sample_nth,
-      sample_word_colon_num,
-  ])
+    sample = np.random.choice([
+        sample_word,
+        sample_word,
+        sample_word,
+        sample_word,
+        sample_num,
+        sample_percent,
+        sample_nth,
+        sample_word_colon_num,
+    ])
 
-  text, subs = sample()
-  replace = np.random.choice([False, False, True])
+    text, subs = sample()
+    replace = np.random.choice([False, False, True])
 
-  if replace:
-    return text.format(*subs), []
-  else:
-    return text, subs
+    if replace:
+        return text.format(*subs), []
+    else:
+        return text, subs
 
 
 def sample(min_len, max_len):
-  template = []
-  subs = []
+    template = []
+    subs = []
 
-  for i in range(np.random.randint(min_len, max_len)):
-    t, s = sample_part()
-    template.append(t)
-    subs += s
+    for i in range(np.random.randint(min_len, max_len)):
+        t, s = sample_part()
+        template.append(t)
+        subs += s
 
-  return ' '.join(template), subs
+    return ' '.join(template), subs
 
 
 def gen(min_len, max_len):
-  while True:
-    x, y = encode(*sample(min_len, max_len))
-    yield x, y
+    while True:
+        x, y = encode(*sample(min_len, max_len))
+        yield x, y
 
 
 def main():
-  g = gen(1, 7)
+    g = gen(1, 7)
 
-  for i in range(3):
-    x, y = next(g)
-    print('x: {}\ny: {}'.format(decode(x), decode(y)))
+    for i in range(3):
+        x, y = next(g)
+        print('x: {}\ny: {}'.format(decode(x), decode(y)))
 
 
 if __name__ == '__main__':
-  main()
+    main()
