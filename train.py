@@ -36,6 +36,7 @@ def compute_loss(y_top, y):
     not_padding = y != 0
     # TODO: use ignore_index argument
     loss = F.cross_entropy(y_top[not_padding], y[not_padding], reduce=False)
+    # TODO: sum by time and mean by batch
 
     return loss
 
