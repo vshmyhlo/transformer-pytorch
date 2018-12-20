@@ -56,9 +56,9 @@ class TrainEvalDataset(torch.utils.data.Dataset):
                 if y[-1] == '.': y = y[:-1]  # TODO: fix this
 
                 # TODO:
-                if len(x) > 128:
+                if len(x) > 160:
                     continue
-                if len(y) > 128:
+                if len(y) > 160:
                     continue
 
                 data.append((x, y))
