@@ -14,7 +14,7 @@ class MultiHeadAttention(nn.Module):
         ])
         self.projection = nn.Linear(size * n_heads, size, bias=False)
 
-        init.xavier_normal(self.projection.weight)
+        init.xavier_normal_(self.projection.weight)
 
     def forward(self, x, states, mask):
         xs = [attention(x, states, mask) for attention in self.attentions]
@@ -36,9 +36,9 @@ class Attention(nn.Module):
         elif attention_type == 'scaled_dot_product':
             self.attention = ScaledDotProductAttention()
 
-        init.xavier_normal(self.ql.weight)
-        init.xavier_normal(self.kl.weight)
-        init.xavier_normal(self.vl.weight)
+        init.xavier_normal_(self.ql.weight)
+        init.xavier_normal_(self.kl.weight)
+        init.xavier_normal_(self.vl.weight)
 
     def forward(self, x, states, mask):
         q = self.ql(x)
@@ -72,7 +72,7 @@ class LuongAttention(nn.Module):
         super().__init__()
         self.fc = nn.Linear(size, size, bias=False)
 
-        init.xavier_normal(self.fc.weight)
+        init.xavier_normal_(self.fc.weight)
 
     def forward(self, q, k, mask):
         wk = self.fc(k)

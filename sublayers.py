@@ -40,8 +40,8 @@ class FeedForwardSublayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = LayerNorm(size)
 
-        init.xavier_normal(self.fc1.weight)
-        init.xavier_normal(self.fc2.weight)
+        init.xavier_normal_(self.fc1.weight)
+        init.xavier_normal_(self.fc2.weight)
 
     def forward(self, x):
         saved = x
