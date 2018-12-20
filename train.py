@@ -160,7 +160,7 @@ def main():
             loss.mean().backward()  # TODO: sum/mean non padding
             optimizer.step()
 
-        train_writer.add_scalar('loss', metrics['loss'].compute_and_reset())
+        train_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
 
         # Evaluate
         model.eval()
@@ -172,7 +172,7 @@ def main():
             loss = compute_loss(y_top=y_top, y=y)
             metrics['loss'].update(loss.data.cpu().numpy())
 
-        eval_writer.add_scalar('loss', metrics['loss'].compute_and_reset())
+        eval_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
 
         # Save model
         save_model(model, experiment_path)
