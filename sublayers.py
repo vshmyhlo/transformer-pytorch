@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import attention
 
 
+# TODO: init 0.4
+
 class AttentionSublayer(nn.Module):
     def __init__(self, size, n_heads, attention_type, dropout):
         super().__init__()
@@ -45,7 +47,7 @@ class FeedForwardSublayer(nn.Module):
         saved = x
 
         x = self.fc1(x)
-        x = F.relu(x)
+        x = F.relu(x, inplace=True)
         x = self.fc2(x)
         x = self.dropout(x)
         x = self.layer_norm(saved + x)
@@ -53,6 +55,7 @@ class FeedForwardSublayer(nn.Module):
         return x
 
 
+# TODO:
 # TODO: check states are switched between train and eval
 class LayerNorm(nn.Module):
     def __init__(self, size, eps=1e-6):

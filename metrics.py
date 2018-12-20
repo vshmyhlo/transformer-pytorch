@@ -25,14 +25,6 @@ class Summary(object):
             return self.metrics
 
 
-def loss(y_top, y, padding_idx):
-    not_padding = y != padding_idx
-    # TODO: use ignore_index argument
-    loss = F.cross_entropy(y_top[not_padding], y[not_padding], reduce=False)
-
-    return loss
-
-
 def accuracy(y_top, y, padding_idx):
     _, y_top = y_top.max(-1)
     not_padding = y != padding_idx

@@ -6,7 +6,7 @@ import numpy as np
 
 
 # TODO: test this
-def get_attention_padding_mask(seq_q, seq_k, padding_idx):
+def get_attention_padding_mask(seq_q, seq_k, padding_idx=0):
     """
     Indicate the padding-related part to mask
     """
@@ -35,29 +35,24 @@ def get_attention_subsequent_mask(seq):
 
 
 class Tranformer(nn.Module):
-    def __init__(self, source_vocab_size, target_vocab_size, size, n_layers,
-                 n_heads, pe_type, dropout, padding_idx, attention_type,
-                 share_embedding):
+    def __init__(
+            self, source_vocab_size, target_vocab_size, size, n_layers, n_heads, dropout, attention_type,
+            share_embedding):
         super().__init__()
 
-        self.padding_idx = padding_idx
         self.encoder = Encoder(
             source_vocab_size,
             size,
             n_layers,
             n_heads,
-            pe_type,
             dropout,
-            padding_idx,
             attention_type=attention_type)
         self.decoder = Decoder(
             target_vocab_size,
             size,
             n_layers,
             n_heads,
-            pe_type,
             dropout,
-            padding_idx,
             attention_type=attention_type)
         self.projection = nn.Linear(size, target_vocab_size, bias=False)
 
@@ -66,11 +61,11 @@ class Tranformer(nn.Module):
 
     def forward(self, x, y_bottom):
         encoder_self_attention_mask = Variable(
-            get_attention_padding_mask(x, x, padding_idx=self.padding_idx))
+            get_attention_padding_mask(x, x))
         decoder_self_attention_mask = Variable(
             get_attention_subsequent_mask(y_bottom))
         decoder_encoder_attention_mask = Variable(
-            get_attention_padding_mask(y_bottom, x, padding_idx=self.padding_idx))
+            get_attention_padding_mask(y_bottom, x))
 
         encoder_states = self.encoder(
             x, self_attention_mask=encoder_self_attention_mask)
@@ -84,17 +79,13 @@ class Tranformer(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
-                 padding_idx, attention_type):
+    def __init__(self, num_embeddings, size, n_layers, n_heads, dropout, attention_type):
         super().__init__()
 
         self.n_layers = n_layers
         self.n_heads = n_heads
-        self.embedding = nn.Embedding(
-            num_embeddings=num_embeddings,
-            embedding_dim=size,
-            padding_idx=padding_idx)
-        self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
+        self.embedding = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=size)
+        self.positional_encoding = PositionalEncoding()
         self.dropout = nn.Dropout(dropout)
         self.encoder_layers = nn.ModuleList([
             EncoderLayer(
@@ -107,6 +98,7 @@ class Encoder(nn.Module):
         x = self.positional_encoding(x)
         x = self.dropout(x)
 
+        # TODO: sequential
         for layer in self.encoder_layers:
             x = layer(x, self_attention_mask=self_attention_mask)
 
@@ -114,17 +106,13 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, num_embeddings, size, n_layers, n_heads, pe_type, dropout,
-                 padding_idx, attention_type):
+    def __init__(self, num_embeddings, size, n_layers, n_heads, dropout, attention_type):
         super().__init__()
 
         self.n_layers = n_layers
         self.n_heads = n_heads
-        self.embedding = nn.Embedding(
-            num_embeddings=num_embeddings,
-            embedding_dim=size,
-            padding_idx=padding_idx)
-        self.positional_encoding = PositionalEncoding(size, pe_type=pe_type)
+        self.embedding = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=size)
+        self.positional_encoding = PositionalEncoding()
         self.dropout = nn.Dropout(dropout)
         self.decoder_layers = nn.ModuleList([
             DecoderLayer(
@@ -182,43 +170,16 @@ class DecoderLayer(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, size, pe_type):
-        super().__init__()
-
-        self.pe_type = pe_type
-
-        if self.pe_type == 'projection':
-            self.projection = nn.Linear(size * 2, size, bias=False)
-
     def forward(self, x):
-        size = x.size()
+        d_model = x.size(2)
+        # TODO: start from 0 or 1?
+        pos = torch.arange(0, x.size(1)).unsqueeze(-1).float()
+        i = torch.arange(0, x.size(2)).unsqueeze(0).float()
+        encoding = pos / 10000**(2 * i / d_model)
+        encoding[:, 0::2] = torch.sin(encoding[:, 0::2])
+        encoding[:, 1::2] = torch.cos(encoding[:, 1::2])
 
-        if self.pe_type == 'projection':
-            k = 0.75
-        elif self.pe_type == 'addition':
-            k = 2
+        encoding = encoding.unsqueeze(0)
+        x += encoding
 
-        pos = torch.arange(0, size[1], 1).unsqueeze(0).unsqueeze(-1)
-        dim = torch.arange(0, size[2], 2).unsqueeze(0).unsqueeze(0)
-        if x.is_cuda:
-            pos, dim = pos.cuda(), dim.cuda()
-        encoding = pos / 10000**(k * dim / size[-1])
-        encoding = Variable(encoding)
-        encoding_sin = torch.sin(encoding)
-        encoding_cos = torch.cos(encoding)
-
-        if self.pe_type == 'projection':
-            x = torch.cat([
-                x,
-                encoding_sin.repeat(size[0], 1, 1),
-                encoding_cos.repeat(size[0], 1, 1),
-            ], -1)
-
-            x = self.projection(x)
-
-            return x
-        elif self.pe_type == 'addition':
-            encoding = torch.cat([encoding_sin, encoding_cos], -1)
-            x += encoding
-
-            return x
+        return x
