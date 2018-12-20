@@ -99,7 +99,9 @@ def main():
     logging.basicConfig(level=logging.INFO)
     args = build_parser().parse_args()
     logging.info(args_to_string(args))
-    experiment_path = os.path.join(args.experiment_path, args_to_path(args))
+    experiment_path = os.path.join(
+        args.experiment_path,
+        args_to_path(args, ignore=['experiment_path', 'restore_path', 'seed', 'epochs', 'n_threads', 'dataset_path']))
     fix_seed(args.seed)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
