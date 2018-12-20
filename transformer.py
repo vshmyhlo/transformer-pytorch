@@ -180,6 +180,6 @@ class PositionalEncoding(nn.Module):
         encoding[:, 1::2] = torch.cos(encoding[:, 1::2])
 
         encoding = encoding.unsqueeze(0)
-        x += encoding
+        x += encoding.to(x.device)
 
         return x
