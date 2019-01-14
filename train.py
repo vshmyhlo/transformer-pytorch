@@ -98,11 +98,8 @@ def take_until_token(seq, token):
 
 def compute_bleu(logits, y, eos_id):
     true = y.data.cpu().numpy()
-    pred = logits.argmax().data.cpu().numpy()
-
-    print(logits.shape, y.shape)
-    print(logits.dtype, y.dtype)
-    print(logits[0], y[0])
+    pred = logits.argmax(-1).data.cpu().numpy()
+    print(true.shape, pred.shape)
 
     bleus = []
     for t, p in zip(true, pred):
