@@ -10,9 +10,8 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
 
         self.attentions = nn.ModuleList([
-            Attention(size, attention_type=attention_type) for _ in range(n_heads)
-        ])
-        self.projection = nn.Linear(size * n_heads, size, bias=False)
+            Attention(size, attention_type=attention_type) for _ in range(n_heads)])
+        self.projection = nn.Linear(size * n_heads, size)
 
         init.xavier_normal_(self.projection.weight)
 
@@ -20,6 +19,7 @@ class MultiHeadAttention(nn.Module):
         xs = [attention(x, states, mask) for attention in self.attentions]
         x = torch.cat(xs, -1)
         x = self.projection(x)
+
         return x
 
 
@@ -27,9 +27,9 @@ class Attention(nn.Module):
     def __init__(self, size, attention_type):
         super().__init__()
 
-        self.ql = nn.Linear(size, size, bias=False)
-        self.kl = nn.Linear(size, size, bias=False)
-        self.vl = nn.Linear(size, size, bias=False)
+        self.ql = nn.Linear(size, size)
+        self.kl = nn.Linear(size, size)
+        self.vl = nn.Linear(size, size)
 
         if attention_type == 'luong':
             self.attention = LuongAttention(size)
@@ -70,7 +70,7 @@ class LuongAttention(nn.Module):
     # TODO: check everything is correct
     def __init__(self, size):
         super().__init__()
-        self.linear = nn.Linear(size, size, bias=False)
+        self.linear = nn.Linear(size, size)
 
         init.xavier_normal_(self.linear.weight)
 

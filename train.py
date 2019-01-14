@@ -15,6 +15,7 @@ from dataset import TrainEvalDataset
 from nltk.translate.bleu_score import sentence_bleu
 
 
+# TODO: remove torch var
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
 # TODO: scheduling
@@ -109,12 +110,9 @@ def compute_bleu(logits, y, eos_id):
     return bleus
 
 
-# TODO: try larger betas
-# TODO: revisit
 def build_optimizer(parameters, optimizer, learning_rate):
     if optimizer == 'adam':
-        return optim.Adam(
-            parameters, lr=learning_rate, betas=(0.9, 0.98), eps=1e-9)
+        return optim.Adam(parameters, lr=learning_rate, betas=(0.9, 0.98), eps=1e-9)
     elif optimizer == 'momentum':
         return optim.SGD(parameters, lr=learning_rate, momentum=0.9)
 

@@ -1,8 +1,8 @@
+import numpy as np
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import sublayers
-import numpy as np
 
 
 # TODO: test this
@@ -46,18 +46,15 @@ class Tranformer(nn.Module):
             n_heads,
             dropout,
             attention_type=attention_type)
-        self.projection = nn.Linear(size, target_vocab_size, bias=False)
+        self.projection = nn.Linear(size, target_vocab_size)
 
         if share_embedding:
             self.projection.weight = self.decoder.embedding.weight
 
     def forward(self, x, y_bottom):
-        encoder_self_attention_mask = Variable(
-            compute_attention_padding_mask(x, x))
-        decoder_self_attention_mask = Variable(
-            compute_attention_subsequent_mask(y_bottom))
-        decoder_encoder_attention_mask = Variable(
-            compute_attention_padding_mask(y_bottom, x))
+        encoder_self_attention_mask = Variable(compute_attention_padding_mask(x, x))
+        decoder_self_attention_mask = Variable(compute_attention_subsequent_mask(y_bottom))
+        decoder_encoder_attention_mask = Variable(compute_attention_padding_mask(y_bottom, x))
 
         encoder_states = self.encoder(
             x, self_attention_mask=encoder_self_attention_mask)
