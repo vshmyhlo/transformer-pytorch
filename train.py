@@ -99,14 +99,11 @@ def take_until_token(seq, token):
 def compute_bleu(logits, y, eos_id):
     true = y.data.cpu().numpy()
     pred = logits.argmax(-1).data.cpu().numpy()
-    print(true.shape, pred.shape)
 
     bleus = []
     for t, p in zip(true, pred):
-        print(len(t), len(p))
         t = take_until_token(list(t), eos_id)
         p = take_until_token(list(p), eos_id)
-        print(len(t), len(p))
         bleus.append(sentence_bleu(references=[t], hypothesis=p))
 
     return bleus
