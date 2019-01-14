@@ -12,8 +12,10 @@ import torch
 import torch.optim as optim
 import transformer
 from dataset import TrainEvalDataset
+from nltk.translate.bleu_score import sentence_bleu
 
 
+# TODO: rename y, y_top, etc.
 # TODO: check dropout
 # TODO: scheduling
 # TODO: wer
@@ -33,12 +35,12 @@ from dataset import TrainEvalDataset
 # TODO: label smoothing
 
 
-def compute_loss(y_top, y):
+def compute_loss(logits, y):
     # TODO: use ignore_index argument
     # TODO: sum by time and mean by batch
 
     non_padding = y != 0
-    loss = F.cross_entropy(y_top[non_padding], y[non_padding])
+    loss = F.cross_entropy(logits[non_padding], y[non_padding])
 
     return loss
 
@@ -87,11 +89,28 @@ def build_parser():
     return parser
 
 
-def compute_bleu(y_top, y):
-    print(y_top.shape, y.shape)
-    print(y_top.dtype, y.dtype)
-    print(y_top[0], y[0])
-    fail
+def take_until_token(seq, token):
+    if token in seq:
+        return seq[:seq.index(token)]
+    else:
+        return seq
+
+
+def compute_bleu(logits, y, eos_id):
+    true = y.data.cpu().numpy()
+    pred = logits.argmax().data.cpu().numpy()
+
+    print(logits.shape, y.shape)
+    print(logits.dtype, y.dtype)
+    print(logits[0], y[0])
+
+    bleus = []
+    for t, p in zip(true, pred):
+        t = take_until_token(t, eos_id)
+        p = take_until_token(p, eos_id)
+        bleus.append(sentence_bleu(references=[t], hypothesis=p))
+
+    return bleus
 
 
 # TODO: try larger betas
@@ -161,8 +180,8 @@ def main():
             x, y = x.to(device), y.to(device)
             y_bottom, y = y[:, :-1], y[:, 1:]
 
-            y_top = model(x, y_bottom)
-            loss = compute_loss(y_top=y_top, y=y)
+            logits = model(x, y_bottom)
+            loss = compute_loss(logits=logits, y=y)
             metrics['loss'].update(loss.data.cpu().numpy())
 
             optimizer.zero_grad()
@@ -174,16 +193,17 @@ def main():
 
         # eval
         model.eval()
-        for x, y in tqdm(eval_data_loader, desc='epoch {} evaluating'.format(epoch)):
-            x, y = x.to(device), y.to(device)
-            y_bottom, y = y[:, :-1], y[:, 1:]
+        with torch.no_grad():
+            for x, y in tqdm(eval_data_loader, desc='epoch {} evaluating'.format(epoch)):
+                x, y = x.to(device), y.to(device)
+                y_bottom, y = y[:, :-1], y[:, 1:]
 
-            y_top = model(x, y_bottom)
-            loss = compute_loss(y_top=y_top, y=y)
-            metrics['loss'].update(loss.data.cpu().numpy())
+                logits = model(x, y_bottom)
+                loss = compute_loss(logits=logits, y=y)
+                metrics['loss'].update(loss.data.cpu().numpy())
 
-            bleu = compute_bleu(y_top=y_top, y=y)
-            metrics['bleu'].update(bleu)
+                bleu = compute_bleu(logits=logits, y=y, eos_id=train_dataset.target_vocab.eos_id)
+                metrics['bleu'].update(bleu)
 
         eval_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
         eval_writer.add_scalar('bleu', metrics['bleu'].compute_and_reset(), global_step=epoch)
