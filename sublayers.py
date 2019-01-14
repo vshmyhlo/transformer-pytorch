@@ -11,17 +11,16 @@ class AttentionSublayer(nn.Module):
     def __init__(self, size, n_heads, attention_type, dropout):
         super().__init__()
 
-        self.attention = attention.MultiHeadAttention(
-            size, n_heads, attention_type=attention_type)
+        self.attention = attention.MultiHeadAttention(size, n_heads, attention_type=attention_type)
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = LayerNorm(size)
 
     def forward(self, x, states, mask=None):
-        saved = x
+        identity = x
 
         x = self.attention(x, states, mask)
         x = self.dropout(x)
-        x = self.layer_norm(saved + x)
+        x = self.layer_norm(identity + x)
 
         return x
 
@@ -44,13 +43,13 @@ class FeedForwardSublayer(nn.Module):
         init.xavier_normal_(self.fc2.weight)
 
     def forward(self, x):
-        saved = x
+        identity = x
 
         x = self.fc1(x)
         x = F.relu(x, inplace=True)
         x = self.fc2(x)
         x = self.dropout(x)
-        x = self.layer_norm(saved + x)
+        x = self.layer_norm(identity + x)
 
         return x
 

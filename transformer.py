@@ -56,15 +56,15 @@ class Tranformer(nn.Module):
         decoder_self_attention_mask = Variable(compute_attention_subsequent_mask(y_bottom))
         decoder_encoder_attention_mask = Variable(compute_attention_padding_mask(y_bottom, x))
 
-        encoder_states = self.encoder(
-            x, self_attention_mask=encoder_self_attention_mask)
-        y_top = self.decoder(
+        encoder_states = self.encoder(x, self_attention_mask=encoder_self_attention_mask)
+        logits = self.decoder(
             y_bottom,
             encoder_states,
             self_attention_mask=decoder_self_attention_mask,
             encoder_attention_mask=decoder_encoder_attention_mask)
-        y_top = self.projection(y_top)
-        return y_top
+        logits = self.projection(logits)
+
+        return logits
 
 
 class Encoder(nn.Module):
