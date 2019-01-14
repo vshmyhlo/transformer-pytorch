@@ -20,7 +20,6 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: remove torch var
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
-# TODO: scheduling
 # TODO: wer
 # TODO: remove buckets and simplify code
 # TODO: try lowercase everything
@@ -31,7 +30,6 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
 # TODO: add option to share embedding and projection weights
 # TODO: embedding and projection weights scaling
-# TODO: learning_rate scheduling
 # TODO: weight initialization
 # TODO: try disable share_embedding
 # TODO: test masking
