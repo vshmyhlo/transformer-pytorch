@@ -1,5 +1,7 @@
 from tensorboardX import SummaryWriter
+import numpy as np
 import torch.nn.functional as F
+from scheduler import WarmupAndDecay
 from ticpfptp.metrics import Mean
 from ticpfptp.torch import load_weights, save_model, fix_seed
 from ticpfptp.format import args_to_path, args_to_string
@@ -34,6 +36,7 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: try disable share_embedding
 # TODO: test masking
 # TODO: label smoothing
+# TODO: dropout
 
 
 def compute_loss(logits, y):
@@ -81,7 +84,7 @@ def build_parser():
     parser.add_argument("--n-layers", type=int, default=4)
     parser.add_argument("--n-heads", type=int, default=4)
     parser.add_argument("--n-threads", type=int, default=os.cpu_count() // 2)
-    parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument("--learning-rate", type=float, default=1.0)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--optimizer", type=str, choices=['adam', 'momentum'], default='adam')
     parser.add_argument(
@@ -162,6 +165,7 @@ def main():
         model.parameters(),
         args.optimizer,
         learning_rate=args.learning_rate)
+    scheduler = WarmupAndDecay(optimizer, d_model=args.size, warmup_steps=4000)
 
     train_writer = SummaryWriter(experiment_path)
     eval_writer = SummaryWriter(os.path.join(experiment_path, 'eval'))
@@ -180,9 +184,11 @@ def main():
 
             optimizer.zero_grad()
             loss.mean().backward()  # TODO: sum/mean non padding
+            scheduler.step()
             optimizer.step()
 
         train_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
+        train_writer.add_scalar('learning_rate', np.squeeze(scheduler.get_lr()), global_step=epoch)
 
         # eval
         model.eval()
