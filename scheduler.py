@@ -9,6 +9,8 @@ class WarmupAndDecay(torch.optim.lr_scheduler._LRScheduler):
         super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
+        step = self.last_epoch + 1
+       
         return [
-            base_lr * self.d_model**-0.5 * min(self.last_epoch**-0.5, self.last_epoch * self.warmup_steps**-1.5)
+            base_lr * self.d_model**-0.5 * min(step**-0.5, step * self.warmup_steps**-1.5)
             for base_lr in self.base_lrs]
