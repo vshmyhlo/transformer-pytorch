@@ -5,9 +5,7 @@ from ticpfptp.torch import load_weights, save_model, fix_seed
 from ticpfptp.format import args_to_path, args_to_string
 from tqdm import tqdm
 import logging
-import utils
 import torch.utils.data
-import numpy as np
 import os
 import argparse
 import torch
@@ -16,6 +14,9 @@ import transformer
 from dataset import TrainEvalDataset
 
 
+# TODO: check dropout
+# TODO: scheduling
+# TODO: wer
 # TODO: remove buckets and simplify code
 # TODO: try lowercase everything
 # TODO: visualize attention
@@ -33,10 +34,11 @@ from dataset import TrainEvalDataset
 
 
 def compute_loss(y_top, y):
-    not_padding = y != 0
     # TODO: use ignore_index argument
-    loss = F.cross_entropy(y_top[not_padding], y[not_padding], reduce=False)
     # TODO: sum by time and mean by batch
+
+    non_padding = y != 0
+    loss = F.cross_entropy(y_top[non_padding], y[non_padding])
 
     return loss
 
@@ -69,7 +71,7 @@ def build_parser():
     parser.add_argument('--restore-path', type=str)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--size", type=int, default=128)
+    parser.add_argument("--size", type=int, default=256)
     parser.add_argument("--share-embedding", action='store_true')
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--dataset-path", type=str, nargs=3, default=['./iwslt15', 'en', 'vi'])
@@ -83,6 +85,13 @@ def build_parser():
         "--attention-type", type=str, choices=['scaled_dot_product', 'luong'], default='scaled_dot_product')
 
     return parser
+
+
+def compute_bleu(y_top, y):
+    print(y_top.shape, y.shape)
+    print(y_top.dtype, y.dtype)
+    print(y_top[0], y[0])
+    fail
 
 
 # TODO: try larger betas
@@ -143,10 +152,10 @@ def main():
 
     train_writer = SummaryWriter(experiment_path)
     eval_writer = SummaryWriter(os.path.join(experiment_path, 'eval'))
-    metrics = {'loss': Mean()}
+    metrics = {'loss': Mean(), 'bleu': Mean()}
 
     for epoch in range(args.epochs):
-        # Train
+        # train
         model.train()
         for x, y in tqdm(train_data_loader, desc='epoch {} training'.format(epoch)):
             x, y = x.to(device), y.to(device)
@@ -159,10 +168,11 @@ def main():
             optimizer.zero_grad()
             loss.mean().backward()  # TODO: sum/mean non padding
             optimizer.step()
+            break
 
         train_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
 
-        # Evaluate
+        # eval
         model.eval()
         for x, y in tqdm(eval_data_loader, desc='epoch {} evaluating'.format(epoch)):
             x, y = x.to(device), y.to(device)
@@ -172,9 +182,13 @@ def main():
             loss = compute_loss(y_top=y_top, y=y)
             metrics['loss'].update(loss.data.cpu().numpy())
 
-        eval_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
+            bleu = compute_bleu(y_top=y_top, y=y)
+            metrics['bleu'].update(bleu)
 
-        # Save model
+        eval_writer.add_scalar('loss', metrics['loss'].compute_and_reset(), global_step=epoch)
+        eval_writer.add_scalar('bleu', metrics['bleu'].compute_and_reset(), global_step=epoch)
+
+        # save model
         save_model(model, experiment_path)
 
 

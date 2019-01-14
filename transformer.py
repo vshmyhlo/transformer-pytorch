@@ -6,11 +6,7 @@ import numpy as np
 
 
 # TODO: test this
-def get_attention_padding_mask(seq_q, seq_k, padding_idx=0):
-    """
-    Indicate the padding-related part to mask
-    """
-
+def compute_attention_padding_mask(seq_q, seq_k, padding_idx=0):
     assert seq_q.dim() == 2 and seq_k.dim() == 2
 
     pad_attn_mask = (seq_k.data != padding_idx).unsqueeze(1)
@@ -18,11 +14,7 @@ def get_attention_padding_mask(seq_q, seq_k, padding_idx=0):
 
 
 # TODO: test this
-def get_attention_subsequent_mask(seq):
-    """
-    Get an attention mask to avoid using the subsequent info.
-    """
-
+def compute_attention_subsequent_mask(seq):
     assert seq.dim() == 2
 
     attention_shape = (1, seq.size(1), seq.size(1))
@@ -61,11 +53,11 @@ class Tranformer(nn.Module):
 
     def forward(self, x, y_bottom):
         encoder_self_attention_mask = Variable(
-            get_attention_padding_mask(x, x))
+            compute_attention_padding_mask(x, x))
         decoder_self_attention_mask = Variable(
-            get_attention_subsequent_mask(y_bottom))
+            compute_attention_subsequent_mask(y_bottom))
         decoder_encoder_attention_mask = Variable(
-            get_attention_padding_mask(y_bottom, x))
+            compute_attention_padding_mask(y_bottom, x))
 
         encoder_states = self.encoder(
             x, self_attention_mask=encoder_self_attention_mask)
@@ -90,8 +82,7 @@ class Encoder(nn.Module):
         self.encoder_layers = nn.ModuleList([
             EncoderLayer(
                 size, n_heads, attention_type=attention_type, dropout=dropout)
-            for _ in range(self.n_layers)
-        ])
+            for _ in range(self.n_layers)])
 
     def forward(self, x, self_attention_mask):
         x = self.embedding(x)
@@ -117,8 +108,7 @@ class Decoder(nn.Module):
         self.decoder_layers = nn.ModuleList([
             DecoderLayer(
                 size, n_heads, attention_type=attention_type, dropout=dropout)
-            for _ in range(self.n_layers)
-        ])
+            for _ in range(self.n_layers)])
 
     def forward(self, y_bottom, states, self_attention_mask,
                 encoder_attention_mask):
@@ -169,6 +159,7 @@ class DecoderLayer(nn.Module):
         return x
 
 
+# TODO: test
 class PositionalEncoding(nn.Module):
     def forward(self, x):
         d_model = x.size(2)

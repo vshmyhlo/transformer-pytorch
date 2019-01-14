@@ -70,12 +70,12 @@ class LuongAttention(nn.Module):
     # TODO: check everything is correct
     def __init__(self, size):
         super().__init__()
-        self.fc = nn.Linear(size, size, bias=False)
+        self.linear = nn.Linear(size, size, bias=False)
 
-        init.xavier_normal_(self.fc.weight)
+        init.xavier_normal_(self.linear.weight)
 
     def forward(self, q, k, mask):
-        wk = self.fc(k)
+        wk = self.linear(k)
         wk = wk.transpose(2, 1)
         scores = torch.bmm(q, wk)
         if mask is not None:
