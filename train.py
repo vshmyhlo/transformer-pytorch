@@ -103,8 +103,10 @@ def compute_bleu(logits, y, eos_id):
 
     bleus = []
     for t, p in zip(true, pred):
-        t = take_until_token(t, eos_id)
-        p = take_until_token(p, eos_id)
+        print(len(t), len(p))
+        t = take_until_token(list(t), eos_id)
+        p = take_until_token(list(p), eos_id)
+        print(len(t), len(p))
         bleus.append(sentence_bleu(references=[t], hypothesis=p))
 
     return bleus
