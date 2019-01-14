@@ -172,7 +172,7 @@ def main():
     for epoch in range(args.epochs):
         # train
         model.train()
-        for x, y in tqdm(train_data_loader, desc='epoch {} training'.format(epoch)):
+        for x, y in tqdm(train_data_loader, desc='epoch {} training'.format(epoch), smoothing=0.1):
             x, y = x.to(device), y.to(device)
             y_bottom, y = y[:, :-1], y[:, 1:]
 
@@ -189,7 +189,7 @@ def main():
         # eval
         model.eval()
         with torch.no_grad():
-            for x, y in tqdm(eval_data_loader, desc='epoch {} evaluating'.format(epoch)):
+            for x, y in tqdm(eval_data_loader, desc='epoch {} evaluating'.format(epoch), smoothing=0.1):
                 x, y = x.to(device), y.to(device)
                 y_bottom, y = y[:, :-1], y[:, 1:]
 
