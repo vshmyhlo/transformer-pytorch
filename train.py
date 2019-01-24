@@ -34,25 +34,22 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: label smoothing
 # TODO: dropout
 # TODO: loss = F.cross_entropy(pred, gold, ignore_index=Constants.PAD, reduction='sum')
+# TODO: debug collate fn
 
 
+# TODO: use ignore_index argument
+# TODO: sum by time and mean by batch?
 def compute_loss(input, target):
-    # TODO: use ignore_index argument
-    # TODO: sum by time and mean by batch?
-
     non_padding = target != 0
     input = input[non_padding]
     target = target[non_padding]
-
     loss = F.cross_entropy(input=input, target=target, reduction='sum')  # TODO: sum?
 
     return loss
 
 
-# TODO: debug collate fn
 # TODO: revisit
 # TODO: return lengths
-
 def pad_and_pack(seqs):
     max_len = max(len(seq) for seq in seqs)
     seqs = [seq + [0] * (max_len - len(seq)) for seq in seqs]
