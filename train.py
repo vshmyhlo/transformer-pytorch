@@ -33,6 +33,7 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: test masking
 # TODO: label smoothing
 # TODO: dropout
+# TODO: loss = F.cross_entropy(pred, gold, ignore_index=Constants.PAD, reduction='sum')
 
 
 def compute_loss(input, target):
@@ -43,8 +44,7 @@ def compute_loss(input, target):
     input = input[non_padding]
     target = target[non_padding]
 
-    loss = F.cross_entropy(input=input, target=target)
-    loss = loss.sum()  # TODO:
+    loss = F.cross_entropy(input=input, target=target, reduction='sum')  # TODO: sum?
 
     return loss
 
