@@ -163,7 +163,7 @@ class PositionalEncoding(nn.Module):
         # TODO: start from 0 or 1?
         pos = torch.arange(0, x.size(1)).unsqueeze(-1).float()
         i = torch.arange(0, x.size(2)).unsqueeze(0).float()
-        encoding = pos / 10000**(2 * i / d_model)
+        encoding = pos / 10000**(2 * i / d_model)  # TODO: i // 2?
         encoding[:, 0::2] = torch.sin(encoding[:, 0::2])
         encoding[:, 1::2] = torch.cos(encoding[:, 1::2])
 

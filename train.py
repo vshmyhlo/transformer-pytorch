@@ -17,19 +17,17 @@ from dataset import TrainEvalDataset
 from nltk.translate.bleu_score import sentence_bleu
 
 
+# TODO: revisit embeddings and etc
+# TODO: embedding and projection weights scaling
+# TODO: weight init
 # TODO: remove torch var
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
-# TODO: wer
-# TODO: remove buckets and simplify code
 # TODO: try lowercase everything
 # TODO: visualize attention
 # TODO: beam search
 # TODO: add requirements.txt file
 # TODO: byte pair encoding
-# TODO: compute bleu (https://machinelearningmastery.com/calculate-bleu-score-for-text-python/)
-# TODO: add option to share embedding and projection weights
-# TODO: embedding and projection weights scaling
 # TODO: weight initialization
 # TODO: try disable share_embedding
 # TODO: test masking
@@ -37,12 +35,16 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: dropout
 
 
-def compute_loss(logits, y):
+def compute_loss(input, target):
     # TODO: use ignore_index argument
-    # TODO: sum by time and mean by batch
+    # TODO: sum by time and mean by batch?
 
-    non_padding = y != 0
-    loss = F.cross_entropy(logits[non_padding], y[non_padding])
+    non_padding = target != 0
+    input = input[non_padding]
+    target = target[non_padding]
+
+    loss = F.cross_entropy(input=input, target=target)
+    loss = loss.sum()  # TODO:
 
     return loss
 
@@ -77,7 +79,7 @@ def build_parser():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--size", type=int, default=256)
     parser.add_argument("--share-embedding", action='store_true')
-    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--dataset-path", type=str, nargs=3, default=['./iwslt15', 'en', 'vi'])
     parser.add_argument("--n-layers", type=int, default=4)
     parser.add_argument("--n-heads", type=int, default=4)
@@ -136,7 +138,8 @@ def main():
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=args.n_threads,
-        collate_fn=collate_fn)
+        collate_fn=collate_fn,
+        drop_last=True)
     eval_dataset = TrainEvalDataset(
         args.dataset_path[0], subset='tst2012', source=args.dataset_path[1], target=args.dataset_path[2])
     eval_data_loader = torch.utils.data.DataLoader(
@@ -177,11 +180,11 @@ def main():
             y_bottom, y = y[:, :-1], y[:, 1:]
 
             logits = model(x, y_bottom)
-            loss = compute_loss(logits=logits, y=y)
+            loss = compute_loss(input=logits, target=y)
             metrics['loss'].update(loss.data.cpu().numpy())
 
             optimizer.zero_grad()
-            loss.mean().backward()  # TODO: sum/mean non padding
+            loss.mean().backward()
             scheduler.step()
             optimizer.step()
 
@@ -196,7 +199,7 @@ def main():
                 y_bottom, y = y[:, :-1], y[:, 1:]
 
                 logits = model(x, y_bottom)
-                loss = compute_loss(logits=logits, y=y)
+                loss = compute_loss(input=logits, target=y)
                 metrics['loss'].update(loss.data.cpu().numpy())
 
                 bleu = compute_bleu(logits=logits, y=y, eos_id=train_dataset.target_vocab.eos_id)
