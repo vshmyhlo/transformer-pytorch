@@ -51,13 +51,13 @@ class Attention(nn.Module):
         if mask is not None:
             scores.masked_fill_(mask == 0, float('-inf'))
 
-        print()
-        scores = scores.unsqueeze(-1)
-        v = v.unsqueeze(-2)
-        print(scores.size())
-        print(v.size())
-        scores = scores.softmax(1)
-        context = (v * scores).sum(1)
-        print(context.size())
+        # print()
+        scores = scores.unsqueeze(3)
+        v = v.unsqueeze(1)
+        # print(scores.size())
+        # print(v.size())
+        scores = scores.softmax(2)
+        context = (v * scores).sum(2)
+        # print(context.size())
 
         return context
