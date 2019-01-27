@@ -28,6 +28,7 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: beam search
 # TODO: add requirements.txt file
 # TODO: byte pair encoding
+# TODO: bucketing
 # TODO: weight initialization
 # TODO: try disable share_embedding
 # TODO: test masking
@@ -157,10 +158,7 @@ def main():
     if args.restore_path is not None:
         load_weights(model, os.path.join(args.restore_path))
 
-    optimizer = build_optimizer(
-        model.parameters(),
-        args.optimizer,
-        learning_rate=args.learning_rate)
+    optimizer = build_optimizer(model.parameters(), args.optimizer, learning_rate=args.learning_rate / 8)  # TODO: 1/8
     scheduler = WarmupAndDecay(optimizer, d_model=args.size, warmup_steps=4000)
 
     train_writer = SummaryWriter(experiment_path)
