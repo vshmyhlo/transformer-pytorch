@@ -112,11 +112,11 @@ class EncoderLayer(nn.Module):
         self.self_attention = sublayers.SelfAttentionSublayer(size, n_heads, dropout=dropout)
         self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
-    def forward(self, x, self_attention_mask):
-        x = self.self_attention(x, mask=self_attention_mask)
-        x = self.feed_forward(x)
+    def forward(self, input, self_attention_mask):
+        input = self.self_attention(input, mask=self_attention_mask)
+        input = self.feed_forward(input)
 
-        return x
+        return input
 
 
 class DecoderLayer(nn.Module):
@@ -127,12 +127,12 @@ class DecoderLayer(nn.Module):
         self.encoder_attention = sublayers.AttentionSublayer(size, n_heads, dropout=dropout)
         self.feed_forward = sublayers.FeedForwardSublayer(size, dropout=dropout)
 
-    def forward(self, x, states, self_attention_mask, encoder_attention_mask):
-        x = self.self_attention(x, mask=self_attention_mask)
-        x = self.encoder_attention(x, states, mask=encoder_attention_mask)
-        x = self.feed_forward(x)
+    def forward(self, input, states, self_attention_mask, encoder_attention_mask):
+        input = self.self_attention(input, mask=self_attention_mask)
+        input = self.encoder_attention(input, states, mask=encoder_attention_mask)
+        input = self.feed_forward(input)
 
-        return x
+        return input
 
 
 # TODO: test
