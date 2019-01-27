@@ -51,6 +51,7 @@ class Attention(nn.Module):
         if mask is not None:
             scores.masked_fill_(mask == 0, float('-inf'))
 
+        print()
         scores = scores.unsqueeze(-1)
         v = v.unsqueeze(-2)
         print(scores.size())
