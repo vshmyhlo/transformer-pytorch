@@ -53,10 +53,10 @@ class Attention(nn.Module):
 
         scores = scores.unsqueeze(-1)
         v = v.unsqueeze(-2)
-        # print(scores.size())
-        # print(v.size())
+        print(scores.size())
+        print(v.size())
         scores = scores.softmax(1)
         context = (v * scores).sum(1)
-        # print(context.size())
+        print(context.size())
 
         return context
