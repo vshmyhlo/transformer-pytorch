@@ -44,6 +44,7 @@ def compute_loss(input, target):
     input = input[non_padding]
     target = target[non_padding]
     loss = F.cross_entropy(input=input, target=target, reduction='sum')  # TODO: sum?
+    loss = loss / non_padding.size(0)  # TODO: mean?
 
     return loss
 
