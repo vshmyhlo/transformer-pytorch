@@ -1,16 +1,19 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
 
+# TODO: refactor attention (no luong, no bahd)
+
 # TODO: vectorize this
+# TODO: should project after concatenation?
 class MultiHeadAttention(nn.Module):
-    def __init__(self, size, n_heads, attention_type):
+    def __init__(self, size, n_heads):
         super().__init__()
 
-        self.attentions = nn.ModuleList([
-            Attention(size, attention_type=attention_type) for _ in range(n_heads)])
+        self.attentions = nn.ModuleList([Attention(size) for _ in range(n_heads)])
         self.projection = nn.Linear(size * n_heads, size)
 
         init.xavier_normal_(self.projection.weight)
@@ -23,64 +26,37 @@ class MultiHeadAttention(nn.Module):
         return x
 
 
+# TODO: init
 class Attention(nn.Module):
-    def __init__(self, size, attention_type):
+    def __init__(self, size):
         super().__init__()
 
         self.ql = nn.Linear(size, size)
         self.kl = nn.Linear(size, size)
         self.vl = nn.Linear(size, size)
 
-        if attention_type == 'luong':
-            self.attention = LuongAttention(size)
-        elif attention_type == 'scaled_dot_product':
-            self.attention = ScaledDotProductAttention()
-
         init.xavier_normal_(self.ql.weight)
         init.xavier_normal_(self.kl.weight)
         init.xavier_normal_(self.vl.weight)
 
-    def forward(self, x, states, mask):
-        q = self.ql(x)
+    def forward(self, input, states, mask):
+        q = self.ql(input)
         k = self.kl(states)
         v = self.vl(states)
 
-        scores = self.attention(q, k, mask)
+        # TODO: check shapes
+        # TODO: scores to weights
+        assert q.size(-1) == k.size(-1)
+        scores = torch.bmm(q, k.transpose(2, 1)) / math.sqrt(k.size(-1))
+        if mask is not None:
+            scores.masked_fill_(mask == 0, float('-inf'))
+
         scores = scores.unsqueeze(-1)
-        v = v.unsqueeze(-3)
-        attended = v * scores
-        context = attended.sum(-2)
+        v = v.unsqueeze(-2)
+        # print(scores.size())
+        # print(v.size())
+        scores = scores.softmax(1)
+        context = (v * scores).sum(1)
+        # print(context.size())
 
         return context
-
-
-class ScaledDotProductAttention(nn.Module):
-    def forward(self, q, k, mask):
-        assert q.size(-1) == k.size(-1)
-        scores = torch.bmm(q, k.transpose(2, 1)) / k.size(-1)**0.5
-        if mask is not None:
-            # TODO: mask variable or its data?
-            scores.masked_fill_(mask == 0, float('-inf'))
-        scores = F.softmax(scores, -1)
-
-        return scores
-
-
-class LuongAttention(nn.Module):
-    # TODO: check everything is correct
-    def __init__(self, size):
-        super().__init__()
-        self.linear = nn.Linear(size, size)
-
-        init.xavier_normal_(self.linear.weight)
-
-    def forward(self, q, k, mask):
-        wk = self.linear(k)
-        wk = wk.transpose(2, 1)
-        scores = torch.bmm(q, wk)
-        if mask is not None:
-            # TODO: mask variable or its data?
-            scores.masked_fill_(mask == 0, float('-inf'))
-        scores = F.softmax(scores, -1)
-
-        return scores

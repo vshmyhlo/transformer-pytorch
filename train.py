@@ -24,7 +24,7 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
 # TODO: try lowercase everything
-# TODO: visualize attention
+# TODO: visualize attention <<<<<<<<<<<<
 # TODO: beam search
 # TODO: add requirements.txt file
 # TODO: byte pair encoding
@@ -80,12 +80,10 @@ def build_parser():
     parser.add_argument("--dataset-path", type=str, nargs=3, default=['./iwslt15', 'en', 'vi'])
     parser.add_argument("--n-layers", type=int, default=4)
     parser.add_argument("--n-heads", type=int, default=4)
-    parser.add_argument("--n-threads", type=int, default=os.cpu_count() // 2)
+    parser.add_argument("--n-threads", type=int, default=os.cpu_count())
     parser.add_argument("--learning-rate", type=float, default=1.0)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--optimizer", type=str, choices=['adam', 'momentum'], default='adam')
-    parser.add_argument(
-        "--attention-type", type=str, choices=['scaled_dot_product', 'luong'], default='scaled_dot_product')
 
     return parser
 
@@ -153,7 +151,6 @@ def main():
         n_layers=args.n_layers,
         n_heads=args.n_heads,
         dropout=args.dropout,
-        attention_type=args.attention_type,
         share_embedding=args.share_embedding)
     model.to(device)
     if args.restore_path is not None:

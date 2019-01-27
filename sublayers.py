@@ -8,10 +8,10 @@ import attention
 # TODO: init 0.4
 
 class AttentionSublayer(nn.Module):
-    def __init__(self, size, n_heads, attention_type, dropout):
+    def __init__(self, size, n_heads, dropout):
         super().__init__()
 
-        self.attention = attention.MultiHeadAttention(size, n_heads, attention_type=attention_type)
+        self.attention = attention.MultiHeadAttention(size, n_heads)
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = LayerNorm(size)
 
