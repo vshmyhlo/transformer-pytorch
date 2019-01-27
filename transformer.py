@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
 import sublayers
 
@@ -38,9 +37,9 @@ class Tranformer(nn.Module):
             self.projection.weight = self.decoder.embedding.weight
 
     def forward(self, x, y_bottom):
-        encoder_self_attention_mask = Variable(compute_attention_padding_mask(x, x))
-        decoder_self_attention_mask = Variable(compute_attention_subsequent_mask(y_bottom))
-        decoder_encoder_attention_mask = Variable(compute_attention_padding_mask(y_bottom, x))
+        encoder_self_attention_mask = compute_attention_padding_mask(x, x)
+        decoder_self_attention_mask = compute_attention_subsequent_mask(y_bottom)
+        decoder_encoder_attention_mask = compute_attention_padding_mask(y_bottom, x)
 
         encoder_states = self.encoder(x, self_attention_mask=encoder_self_attention_mask)
         logits = self.decoder(
@@ -91,8 +90,7 @@ class Decoder(nn.Module):
             DecoderLayer(size, n_heads, dropout=dropout)
             for _ in range(self.n_layers)])
 
-    def forward(self, y_bottom, states, self_attention_mask,
-                encoder_attention_mask):
+    def forward(self, y_bottom, states, self_attention_mask, encoder_attention_mask):
         y_bottom = self.embedding(y_bottom)
         y_bottom = self.positional_encoding(y_bottom)
         y_bottom = self.dropout(y_bottom)
@@ -139,16 +137,16 @@ class DecoderLayer(nn.Module):
 
 # TODO: test
 class PositionalEncoding(nn.Module):
-    def forward(self, x):
-        d_model = x.size(2)
+    def forward(self, input):
+        d_model = input.size(2)
         # TODO: start from 0 or 1?
-        pos = torch.arange(0, x.size(1)).unsqueeze(-1).float()
-        i = torch.arange(0, x.size(2)).unsqueeze(0).float()
+        pos = torch.arange(0, input.size(1)).unsqueeze(-1).float()
+        i = torch.arange(0, input.size(2)).unsqueeze(0).float()
         encoding = pos / 10000**(2 * i / d_model)  # TODO: i // 2?
         encoding[:, 0::2] = torch.sin(encoding[:, 0::2])
         encoding[:, 1::2] = torch.cos(encoding[:, 1::2])
 
         encoding = encoding.unsqueeze(0)
-        x += encoding.to(x.device)
+        input += encoding.to(input.device)
 
-        return x
+        return input
