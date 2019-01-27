@@ -174,7 +174,6 @@ def main():
             y_bottom, y = y[:, :-1], y[:, 1:]
 
             logits = model(x, y_bottom)
-            fail
             loss = compute_loss(input=logits, target=y)
             metrics['loss'].update(loss.data.cpu().numpy())
 
