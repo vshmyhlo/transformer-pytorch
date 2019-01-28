@@ -18,7 +18,7 @@ def compute_attention_subsequent_mask(seq):
     assert seq.dim() == 2
 
     attention_shape = (1, seq.size(1), seq.size(1))
-    subsequent_mask = np.tril(np.ones(attention_shape), k=0).astype(np.bool)
+    subsequent_mask = np.tril(np.ones(attention_shape), k=0).astype(np.uint8)
     subsequent_mask = torch.from_numpy(subsequent_mask)
     subsequent_mask = subsequent_mask.to(seq.device)
 
