@@ -17,10 +17,10 @@ from dataset import TrainEvalDataset
 from nltk.translate.bleu_score import sentence_bleu
 
 
+# TODO: print decoding result
 # TODO: revisit embeddings and etc
 # TODO: embedding and projection weights scaling
 # TODO: weight init
-# TODO: remove torch var
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
 # TODO: try lowercase everything

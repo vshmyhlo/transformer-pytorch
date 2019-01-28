@@ -2,10 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-import torch.nn.functional as F
 
-
-# TODO: refactor attention (no luong, no bahd)
 
 # TODO: vectorize this
 # TODO: should project after concatenation?
