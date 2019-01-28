@@ -44,7 +44,7 @@ class Attention(nn.Module):
         # TODO: check shapes
         # TODO: scores to weights
         assert q.size(-1) == k.size(-1)
-        scores = torch.bmm(q, k.transpose(2, 1)) / math.sqrt(k.size(-1))
+        scores = torch.bmm(q, k.transpose(2, 1)) / math.sqrt(q.size(-1))
         if mask is not None:
             scores.masked_fill_(mask == 0, float('-inf'))
 

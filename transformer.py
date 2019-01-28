@@ -7,21 +7,21 @@ import sublayers
 # TODO: test this
 def compute_attention_padding_mask(seq_q, seq_k, padding_idx=0):
     assert seq_q.dim() == 2 and seq_k.dim() == 2
-
     pad_attn_mask = (seq_k.data != padding_idx).unsqueeze(1)
+
     return pad_attn_mask
 
 
 # TODO: test this
+# TODO: use torch
 def compute_attention_subsequent_mask(seq):
     assert seq.dim() == 2
 
     attention_shape = (1, seq.size(1), seq.size(1))
-    # TODO: check typecasting
-    subsequent_mask = np.tril(np.ones(attention_shape), k=0).astype('uint8')
+    subsequent_mask = np.tril(np.ones(attention_shape), k=0).astype(np.bool)
     subsequent_mask = torch.from_numpy(subsequent_mask)
-    if seq.is_cuda:
-        subsequent_mask = subsequent_mask.cuda()
+    subsequent_mask = subsequent_mask.to(seq.device)
+
     return subsequent_mask
 
 
@@ -38,7 +38,8 @@ class Tranformer(nn.Module):
 
     def forward(self, x, y_bottom):
         encoder_self_attention_mask = compute_attention_padding_mask(x, x)
-        decoder_self_attention_mask = compute_attention_subsequent_mask(y_bottom)
+        decoder_self_attention_mask = compute_attention_padding_mask(y_bottom, y_bottom) * \
+                                      compute_attention_subsequent_mask(y_bottom)
         decoder_encoder_attention_mask = compute_attention_padding_mask(y_bottom, x)
 
         encoder_states = self.encoder(x, self_attention_mask=encoder_self_attention_mask)
