@@ -74,12 +74,12 @@ def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment-path", type=str, default='./tf_log')
     parser.add_argument('--restore-path', type=str)
+    parser.add_argument("--dataset-path", type=str, nargs=3, default=['./iwslt15', 'en', 'vi'])
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--size", type=int, default=256)
     parser.add_argument("--share-embedding", action='store_true')
     parser.add_argument("--epochs", type=int, default=1000)
-    parser.add_argument("--dataset-path", type=str, nargs=3, default=['./iwslt15', 'en', 'vi'])
     parser.add_argument("--n-layers", type=int, default=4)
     parser.add_argument("--n-heads", type=int, default=4)
     parser.add_argument("--n-threads", type=int, default=os.cpu_count())
@@ -123,7 +123,7 @@ def main():
     logging.info(args_to_string(args))
     experiment_path = os.path.join(
         args.experiment_path,
-        args_to_path(args, ignore=['experiment_path', 'restore_path', 'seed', 'epochs', 'n_threads', 'dataset_path']))
+        args_to_path(args, ignore=['experiment_path', 'restore_path', 'dataset_path', 'epochs', 'n_threads']))
     fix_seed(args.seed)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -158,8 +158,7 @@ def main():
     if args.restore_path is not None:
         load_weights(model, os.path.join(args.restore_path))
 
-    # optimizer = build_optimizer(model.parameters(), args.optimizer, learning_rate=args.learning_rate / 8)  # TODO: 1/8
-    optimizer = build_optimizer(model.parameters(), args.optimizer, learning_rate=args.learning_rate)  # TODO: 1/8
+    optimizer = build_optimizer(model.parameters(), args.optimizer, learning_rate=args.learning_rate)
     scheduler = WarmupAndDecay(optimizer, d_model=args.size, warmup_steps=4000)
 
     train_writer = SummaryWriter(experiment_path)
