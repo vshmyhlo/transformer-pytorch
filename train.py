@@ -24,13 +24,12 @@ from nltk.translate.bleu_score import sentence_bleu
 # TODO: rename y, y_top, etc.
 # TODO: check dropout
 # TODO: try lowercase everything
-# TODO: visualize attention <<<<<<<<<<<<
+# TODO: visualize attention
 # TODO: beam search
-# TODO: add requirements.txt file
 # TODO: byte pair encoding
 # TODO: bucketing
 # TODO: weight initialization
-# TODO: try disable share_embedding
+# TODO: share_embedding
 # TODO: test masking
 # TODO: label smoothing
 # TODO: dropout
@@ -44,8 +43,8 @@ def compute_loss(input, target):
     non_padding = target != 0
     input = input[non_padding]
     target = target[non_padding]
-    loss = F.cross_entropy(input=input, target=target, reduction='sum')  # TODO: sum?
-    # loss = loss / non_padding.size(0)  # TODO: mean?
+    loss = F.cross_entropy(input=input, target=target, reduction='sum')
+    loss = loss / non_padding.size(0)
 
     return loss
 
